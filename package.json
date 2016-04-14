@@ -1,7 +1,7 @@
 {
   "name": "@dadi/logger",
   "version": "1.0.0",
-  "description": "",
+  "description": "DADI Logger",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -23,5 +23,6 @@
   },
   "homepage": "https://github.com/dadi/logger",
   "author": "DADI <team@dadi.tech>",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {}
 }

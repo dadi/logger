@@ -1,5 +1,7 @@
 DADI Logger
 
+[![npm version](https://badge.fury.io/js/%40dadi%2Flogger.png)](https://badge.fury.io/js/%40dadi%2Flogger)
+
 ```
 npm install @dadi/logger --save
 ```
