@@ -215,3 +215,8 @@ var getClientIpAddress = function (input) {
 
   return result.trim();
 };
+
+// Catch possibly unhandled rejections
+process.on('unhandledRejection', function (reason, p) {
+  self.error(reason);
+});
