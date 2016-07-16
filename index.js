@@ -18,6 +18,12 @@ var accessLog;
 var opts;
 var env;
 
+var trackRequestCount = true;
+var stats = {
+  requests: 0
+};
+
+
 function setOptions(options, awsConfig, environment) {
   env = environment;
 
@@ -190,10 +196,14 @@ var self = module.exports = {
         ' ' + res.statusCode +
         ' ' + duration + 'ms');
 
+      if(trackRequestCount) stats.requests++;
+
       _end.apply(res, arguments);
     };
     next();
-  }
+  },
+
+  stats: stats
 }
 
 var getClientIpAddress = function (input) {
