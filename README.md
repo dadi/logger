@@ -1,6 +1,6 @@
 DADI Logger
 
-[![npm version](https://badge.fury.io/js/%40dadi%2Flogger.png)](https://badge.fury.io/js/%40dadi%2Flogger)
+[![npm (scoped)](https://img.shields.io/npm/v/@dadi/logger.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/logger)
 
 ### Install
 
