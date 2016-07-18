@@ -40,7 +40,7 @@ function setOptions(options, awsConfig, environment) {
     if (made) {
       module.exports.info('Log directory created at ' + made);
     }
-  })
+  });
 
   log = bunyan.createLogger({
     name: 'dadi-' + options.filename,
@@ -61,14 +61,14 @@ function getStreams(options) {
       { level: 'info', type: 'rotating-file', path: logPath, period: options.fileRotationPeriod, count: options.fileRetentionCount },
       { level: 'warn', type: 'rotating-file', path: logPath, period: options.fileRotationPeriod, count: options.fileRetentionCount },
       { level: 'error', type: 'rotating-file', path: logPath, period: options.fileRotationPeriod, count: options.fileRetentionCount }
-    ]
+    ];
   }
   else {
     return [
       { level: 'info', path: logPath },
       { level: 'warn', path: logPath },
       { level: 'error', path: logPath }
-    ]
+    ];
   }
 }
 
@@ -121,7 +121,7 @@ var self = module.exports = {
   init: function(options, awsConfig, environment) {
     this.options = options;
     if (!environment) environment = 'development';
-    setOptions(options, awsConfig, environment)
+    setOptions(options, awsConfig, environment);
   },
 
   enabled: function(level) {
@@ -204,10 +204,12 @@ var self = module.exports = {
   },
 
   stats: stats
-}
+};
 
+/**
+ * Get the client IP address from the load balancer's x-forwarded-for header
+ */
 var getClientIpAddress = function (input) {
-
   // matches all of the addresses in the private ranges and 127.0.0.1 as a bonus
   var privateIpAddress = /(^127.0.0.1)|(^10.)|(^172.1[6-9].)|(^172.2[0-9].)|(^172.3[0-1].)|(^192.168.)/;
   var validIpAddress = /(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/;
@@ -215,15 +217,18 @@ var getClientIpAddress = function (input) {
   var ips = input.split(',');
   var result = '';
 
-  _.each(ips, function (ip) {
-    if (ip.match(validIpAddress)) {
-      if (!ip.match(privateIpAddress)) {
-        result = ip;
-      }
+  ips.forEach(function (ip) {
+    if ( (ip.match(validIpAddress) && !ip.match(privateIpAddress)) || isValidIPv6(ip) ) {
+      result = ip;
     }
   });
 
   return result.trim();
+};
+
+var isValidIPv6 = function(input) {
+  var pattern = /^((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*::((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*|((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4})){7}$/;
+  return pattern.test(input);
 };
 
 // Catch possibly unhandled rejections
