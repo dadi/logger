@@ -56,14 +56,15 @@ function setOptions(options, awsConfig, environment) {
 }
 
 function getStreams(options) {
-  if (options.fileRotationPeriod !== '') {
+  if(options.testStream) {
+    return options.testStream;
+  } else if(options.fileRotationPeriod !== '') {
     return [
       { level: 'info', type: 'rotating-file', path: logPath, period: options.fileRotationPeriod, count: options.fileRetentionCount },
       { level: 'warn', type: 'rotating-file', path: logPath, period: options.fileRotationPeriod, count: options.fileRetentionCount },
       { level: 'error', type: 'rotating-file', path: logPath, period: options.fileRotationPeriod, count: options.fileRetentionCount }
     ]
-  }
-  else {
+  } else {
     return [
       { level: 'info', path: logPath },
       { level: 'warn', path: logPath },
@@ -74,18 +75,26 @@ function getStreams(options) {
 
 function initAccessLog(options, awsConfig) {
   if (options.accessLog.enabled) {
-    accessLog = bunyan.createLogger({
-        name: 'access',
-        serializers: bunyan.stdSerializers,
-        streams: [
-          {
-            type: 'rotating-file',
-            path: accessLogPath,
-            period: options.accessLog.fileRotationPeriod,
-            count: options.accessLog.fileRetentionCount
-          }
-        ]
-    });
+    if(options.testStream){
+      accessLog = bunyan.createLogger({
+          name: 'access',
+          serializers: bunyan.stdSerializers,
+          streams: options.testStream
+      });
+    }else{
+      accessLog = bunyan.createLogger({
+          name: 'access',
+          serializers: bunyan.stdSerializers,
+          streams: [
+            {
+              type: 'rotating-file',
+              path: accessLogPath,
+              period: options.accessLog.fileRotationPeriod,
+              count: options.accessLog.fileRetentionCount
+            }
+          ]
+      });
+    }
   }
 
   if (options.accessLog.enabled &&
