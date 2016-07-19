@@ -4,7 +4,7 @@
   "description": "DADI Logger",
   "main": "dadi/index.js",
   "scripts": {
-    "test": "node node_modules/mocha/bin/mocha test/"
+    "test": "./node_modules/.bin/istanbul cover _mocha"
   },
   "dependencies": {
     "aws-kinesis-writable": "^1.3.1",
@@ -27,6 +27,7 @@
   "license": "ISC",
   "devDependencies": {
     "chai": "^3.5.0",
+    "istanbul": "^0.4.4",
     "jasmine": "^2.4.1",
     "mocha": "^2.5.3"
   }
