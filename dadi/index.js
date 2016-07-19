@@ -1,26 +1,26 @@
 /**
  * @module Log
  */
-var bunyan = require('bunyan');
-var KinesisStream = require('aws-kinesis-writable');
-var fs = require('fs');
-var mkdirp = require('mkdirp');
-var moment = require('moment');
+var bunyan = require('bunyan'); //underlying logger
+var KinesisStream = require('aws-kinesis-writable'); //kinesis
+var fs = require('fs'); //to hand filestreams to bunyan
+var mkdirp = require('mkdirp'); //recursive mkdir
+var moment = require('moment'); //datestamps and timing
 var path = require('path');
 var util = require('util');
 var _ = require('underscore');
 
-var enabled;
-var logPath;
-var accessLogPath;
-var log;
-var accessLog;
+var enabled; //allow logging?
+var logPath; //where to log
+var accessLogPath; //where to stick accessLogs
+var log; //logger instances
+var accessLog; //access log gets it's own instance
 var opts;
-var env;
+var env; //development, production, etc
 
 var trackRequestCount = true;
 var stats = {
-  requests: 0
+  requests: 0 //total request count
 };
 
 
@@ -31,7 +31,7 @@ function setOptions(options, awsConfig, environment) {
   logPath = path.resolve(options.path + '/' + options.filename + '.' + env + '.' + options.extension);
   accessLogPath = path.resolve(options.path + '/' + options.filename + '.access.' + options.extension);
 
-  // create log directory if it doesn't exist
+  // create log directory if it doesn't exist, idempotent
   mkdirp(path.resolve(options.path), {}, function(err, made) {
     if (err) {
       module.exports.error(err);
@@ -50,13 +50,13 @@ function setOptions(options, awsConfig, environment) {
 
   if (env === 'development') {
     log.addStream({ level: 'debug', stream: process.stdout });
-  }
+  } //cli logs in dev
 
   initAccessLog(options, awsConfig);
 }
 
 function getStreams(options) {
-  if(options.testStream) {
+  if(options.testStream) { //override for testing
     return options.testStream;
   } else if(options.fileRotationPeriod !== '') {
     return [
@@ -75,14 +75,14 @@ function getStreams(options) {
 
 function initAccessLog(options, awsConfig) {
   if (options.accessLog.enabled) {
-    if(options.testStream){
+    if(options.testStream){ //test intercept
       accessLog = bunyan.createLogger({
           name: 'access',
           serializers: bunyan.stdSerializers,
           streams: options.testStream
       });
     }else{
-      accessLog = bunyan.createLogger({
+      accessLog = bunyan.createLogger({ //fills up quickly, always rotate
           name: 'access',
           serializers: bunyan.stdSerializers,
           streams: [
@@ -116,7 +116,7 @@ function initAccessLog(options, awsConfig) {
     );
 
     var logStream = _.findWhere(accessLog.streams, { 'name' : 'Kinesis Log Stream' });
-    logStream.stream.on('error', function (err) {
+    logStream.stream.on('error', function (err) { //dump kinesis errors
       console.log(err);
       log.warn(err);
     });
@@ -129,7 +129,7 @@ var self = module.exports = {
 
   init: function(options, awsConfig, environment) {
     this.options = options;
-    if (!environment) environment = 'development';
+    if (!environment) environment = 'development'; //default to dev
     setOptions(options, awsConfig, environment)
   },
 
@@ -147,7 +147,7 @@ var self = module.exports = {
       }
     }
   },
-
+  //bubble up enabled levels to our Bunyan instance
   debug: function debug() {
     if (self.enabled('debug')) log.debug.apply(log, arguments);
   },
@@ -175,10 +175,10 @@ var self = module.exports = {
   getAccessLog: function getAccessLog() {
     return accessLog;
   },
-
+  //middleware for handling Connect style requests
   requestLogger: function (req, res, next) {
     var start = Date.now();
-    var _end = res.end;
+    var _end = res.end; //set up a tap in res.end
     res.end = function () {
       var duration = Date.now() - start;
 
@@ -214,7 +214,7 @@ var self = module.exports = {
 
   stats: stats
 }
-
+//parse IPs from logs
 var getClientIpAddress = function (input) {
 
   // matches all of the addresses in the private ranges and 127.0.0.1 as a bonus
@@ -223,7 +223,7 @@ var getClientIpAddress = function (input) {
 
   var ips = input.split(',');
   var result = '';
-
+  //grab the last thing which matches an ip but isn't private
   _.each(ips, function (ip) {
     if (ip.match(validIpAddress)) {
       if (!ip.match(privateIpAddress)) {
@@ -231,7 +231,7 @@ var getClientIpAddress = function (input) {
       }
     }
   });
-
+  
   return result.trim();
 };
 

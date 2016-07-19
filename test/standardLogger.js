@@ -9,7 +9,7 @@ describe('Standard Logger', function(){
 
   logger.init({
     accessLog: {
-      enabled: false
+      enabled: false //no access log, only expecting single messages
     },
     enabled: true,
     filename: 'test',

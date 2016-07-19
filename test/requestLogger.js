@@ -1,6 +1,13 @@
 var assert = require('chai').assert;
 var memoryStream = require('memorystream');
 
+/*
+ * Generate a Mock httpServer Request and Response
+ * @PARAM statusCode - a RFC2616 status code
+ * @PARAM forwarded - A boolean on whether or not to use the x-forwarded-for header, as if behind an ELB
+ * @PARAM ip - The ip to insert into the request
+ * @PARAM url - the url/path
+ */
 function generateMockRequestAndResponse(statusCode, forwarded, ip, url){
   var req = {
     connection: {
@@ -31,7 +38,7 @@ describe('Request Logger', function(){
   //our logger is a singleton, but we need a clean instance
   delete require.cache[require.resolve('./../dadi/index.js')];
   var logger = require('./../dadi/index.js');
-  var memstream = new memoryStream();
+  var memstream = new memoryStream(); //save ourselves from the fs rabbit hole
 
   logger.init({
     accessLog: {
@@ -58,9 +65,9 @@ describe('Request Logger', function(){
         assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path');
         assert(output.msg.indexOf('Mozilla/5.0') !== -1, 'contains user agent');
       }
-      if(chunks >= 2) return done();
+      if(chunks >= 2) return done(); //only finish after accesslog and info
     });
-    logger.requestLogger(testHttp.req, testHttp.res, testHttp.next);
+    logger.requestLogger(testHttp.req, testHttp.res, testHttp.next); //fire
   });
 
   it('should keep a count of requests', function(){
