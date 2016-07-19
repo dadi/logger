@@ -34,7 +34,6 @@ function generateMockRequestAndResponse(statusCode, forwarded, ip, url){
 }
 
 describe('Request Logger', function(){
-  var testHttp = generateMockRequestAndResponse();
   //our logger is a singleton, but we need a clean instance
   delete require.cache[require.resolve('./../dadi/index.js')];
   var logger = require('./../dadi/index.js');
@@ -52,7 +51,35 @@ describe('Request Logger', function(){
   }, null, 'test');
 
   it('should log a request', function(done){
+    var testHttp = generateMockRequestAndResponse();
     var chunks = 0;
+    memstream.on('data', function(chunk){
+      var output = JSON.parse(chunk.toString());
+      chunks++;
+      if(output.name === 'dadi.test'){
+        assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path');
+        assert(output.msg.indexOf('200') !== -1, 'contains status');
+      }else if(output.name === 'access'){
+        assert(output.msg.indexOf('8.8.8.8') !== -1, 'contains IP address');
+        assert(output.msg.indexOf('http://google.com') !== -1, 'contains referer');
+        assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path');
+        assert(output.msg.indexOf('Mozilla/5.0') !== -1, 'contains user agent');
+      }
+      if(chunks >= 2){
+        memstream.removeAllListeners('data');
+        return done(); //only finish after accesslog and info
+      }
+    });
+    logger.requestLogger(testHttp.req, testHttp.res, testHttp.next); //fire
+  });
+
+  it('should keep a count of requests', function(){
+    assert(logger.stats.requests === 1, 'correct amount of requests logged');
+  });
+
+  it('should handle x-forwarded-for correctly', function(done){
+    var chunks = 0;
+    var testHttp = generateMockRequestAndResponse(200, true);
     memstream.on('data', function(chunk){
       var output = JSON.parse(chunk.toString());
       chunks++;
@@ -68,9 +95,5 @@ describe('Request Logger', function(){
       if(chunks >= 2) return done(); //only finish after accesslog and info
     });
     logger.requestLogger(testHttp.req, testHttp.res, testHttp.next); //fire
-  });
-
-  it('should keep a count of requests', function(){
-    assert(logger.stats.requests === 1, 'correct amount of requests logged');
   });
 });
