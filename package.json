@@ -4,7 +4,8 @@
   "description": "DADI Logger",
   "main": "dadi/index.js",
   "scripts": {
-    "test": "./node_modules/.bin/istanbul cover _mocha"
+    "test": "standard 'index.js' && ./node_modules/.bin/istanbul cover --report cobertura --report text --report html --report lcov ./node_modules/.bin/_mocha test",
+    "posttest": "./scripts/coverage.js"
   },
   "dependencies": {
     "aws-kinesis-writable": "^1.3.1",
@@ -28,7 +29,9 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "istanbul": "^0.4.4",
+    "istanbul-cobertura-badger": "^1.2.1",
     "jasmine": "^2.4.1",
-    "mocha": "^2.5.3"
+    "mocha": "^2.5.3",
+    "standard": "^7.1.2"
   }
 }
