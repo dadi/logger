@@ -4,7 +4,13 @@
 
 ## Overview
 
-
+* [Install](#install)
+* [Configure](#configure)
+* [Using the logger](#using-the-logger)
+* [Namespacing](#namespacing-log-messages)
+* [HTTP request logging](#http-request-logging)
+* [Log rotation](#log-rotation)
+* [Viewing the logs](#viewing-the-logs)
 
 ### Usage
 
@@ -20,17 +26,27 @@ DADI Logger can be initialised with three parameters: log configuration,
 AWS configuration and run environment. Only the first parameter is required: environment
 defaults to `development`.
 
+|Property|Description|Default|Example
+|-|-|-|-
+|enabled|If true, logging is enabled using the following settings|false|true
+|level|The threshold for writing to the log. Levels: `debug`, `info`, `warn`, `error`, `trace` |"info"|"warn"
+|path|The absolute or relative path to the directory for log files|"./log"|"/var/log/"
+|filename|The filename to use for logs, without extension||"web"
+|extension|The file extension to use for logs|".log"|".txt"
+|**accessLog**||||
+|enabled|If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `web.access.log`|false|true
+|kinesisStream|An AWS Kinesis stream to write to log records to||||
+
 ```js
 var logConfig = {
-  enabled: true, // If true, logging is enabled using the following settings
-  level: "info", // Sets the logging level
-  path: "./log", // The absolute or relative path to the directory for log files
-  filename: "my_web_app", // The name to use for the log file, without extension
-  extension: "log", // The extension to use for the log file
+  enabled: true,
+  level: "info",
+  path: "./log",
+  filename: "my_web_app",
+  extension: "log",
   accessLog: {
-    enabled: true, // If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `web.access.log`
-    kinesisStream: "stream_name" // An AWS Kinesis stream to write to log records to
-    }
+    enabled: true,
+    kinesisStream: "stream_name"
   }
 }
 
@@ -40,24 +56,86 @@ var awsConfig = {
   region: ""
 }
 
-var env = 'development'
-
 var logger = require('@dadi/logger')
-logger.init(logConfig, awsConfig, env)
+logger.init(logConfig, awsConfig, 'production')
 ```
 
-### Add HTTP request logging
+### Using the logger
+
+Once the logger has been initialised it's as simple as requiring the module and calling a log method:
 
 ```js
+var logger = require('@dadi/logger')
+
+logger.info('ImageHandler.get(): ' + req.url)
+```
+
+### Namespacing log messages
+
+Log messages can be "namespaced" based on any criteria you can think of, but we like to use a "module" namespace to make it easier to track down messages from different modules.
+
+```js
+var logger = require('@dadi/logger')
+
+logger.info({ module: 'ImageHandler' }, 'GET: ' + req.url)
+```
+
+### HTTP request logging
+
+You can easily add an application-level middleware to log all HTTP requests. The `requestLogger` function will executed every time the app receives a request.
+
+DADI API, CDN and Web all use this HTTP request logger.
+
+#### Express
+
+```js
+var express = require('express')
+var app = express()
+
+var logger = require('@dadi/logger')
+logger.init(logConfig)
+
 app.use(logger.requestLogger)
 ```
 
-### Add logging to other modules
-
+#### Connect
 ```js
+var connect = require('connect')
+var app = connect()
+
 var logger = require('@dadi/logger')
-logger.info('ImageHandler.get: ' + this.req.url)
+logger.init(logConfig)
+
+app.use(logger.requestLogger)
 ```
+
+#### The HTTP log record
+
+The request log contains a stream of JSON records. Each record contains a msg property containing details about the HTTP request, formatted using the nginx server log format.
+
+** Raw log record**
+```
+{"name":"access","hostname":"localhost","pid":3002,"level":30,"msg":"127.0.0.1 - 2016-07-28T13:24:13+08:00 GET /news?page=3 HTTP/1.1 200 17529 Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36","time":"2016-07-28T05:24:13.460Z","v":0}
+```
+
+**Nginx log record, extracted from `msg`**
+```
+127.0.0.1 - 2016-07-28T13:24:13+08:00 GET /news?page=3 HTTP/1.1 200 17529 Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36
+```
+
+This record consists of the following fields:
+
+`remote address` - `time` `request` `status_code` `bytes_sent` `http_referer (optional)` `http_user_agent`
+
+For example:
+
+* remote address: `127.0.0.1`
+* time: `2016-07-28T13:24:13+08:00`
+* request: `GET /news?page=3 HTTP/1.1`
+* status_code: `200`
+* bytes_sent: `17529`
+* http_referer (optional):
+* http_user_agent: `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36`
 
 ### Log Rotation
 
@@ -82,4 +160,79 @@ File: `/etc/logrotate.d/web-production`
     copytruncate
     compress
 }
+```
+
+### Viewing the logs
+
+DADI Logger uses [Bunyan](https://github.com/trentm/node-bunyan) to log errors and events. The Bunyan log output is a stream of JSON objects. A CLI tool is provided for pretty-printing Bunyan logs and for filtering.
+
+#### Install the CLI
+
+To make reading the application logs easier install the Bunyan CLI tool globally:
+
+```
+$ npm install -g bunyan
+```
+
+#### Pipe the stdout log when running your app
+
+```
+$ npm start | bunyan
+```
+
+#### Formats
+
+A formatting option can be passed to the command to view shorter output. See the full range of options available [here](https://github.com/trentm/node-bunyan)
+
+```
+$ npm start | bunyan -o short
+```
+
+#### Pass the log contents to the CLI tool
+
+```
+$ tail log/web.log | bunyan
+```
+```
+[2015-10-27T09:14:01.856Z]  INFO: web/67025 on localhost: 5 rewrites/redirects loaded. (module=router)
+[2015-10-27T09:14:03.380Z]  INFO: web/67025 on localhost: Generating new access token for "/home" (module=auth)
+[2015-10-27T09:14:04.510Z]  INFO: web/67025 on localhost: Token received. (module=auth)
+[2015-10-27T09:14:04.517Z]  INFO: web/67025 on localhost: Generating new access token for datasource movies (module=auth/bearer)
+[2015-10-27T09:14:04.623Z]  INFO: web/67025 on localhost: https://127.0.0.1:3000/1.0/app/movies?count=3&page=1&filter={"state":"published"}&fields={}&sort={} (module=helper)
+[2015-10-27T09:14:04.643Z]  INFO: web/67025 on localhost: GET /home 200 65ms (module=router)
+[2015-10-27T09:16:46.331Z]  INFO: web/67025 on localhost: Server stopped, process exiting. (module=server)
+```
+
+#### Filtering logs
+
+Logs can be filtered by any valid Javascript condition. Here, `this` refers to the log record as JSON.
+
+**Example: filter logs by module**
+
+```
+$ tail -n30 log/web.log | bunyan -c 'this.module=="router"'
+```
+```
+[2015-10-27T09:14:01.856Z]  INFO: web/67025 on localhost: Rewrite module loaded. (module=router)
+[2015-10-27T09:14:01.856Z]  INFO: web/67025 on localhost: 5 rewrites/redirects loaded. (module=router)
+[2015-10-27T09:14:04.643Z]  INFO: web/67025 on localhost: GET /home 200 65ms (module=router)
+```
+
+**Example: filter logs by message contents**
+
+```
+$ tail log/web.log | bunyan -c 'this.msg.indexOf("GET") > -1' -o short
+```
+```
+09:11:57.618Z  INFO web: GET /home 200 460ms (module=router)
+09:13:18.325Z  INFO web: GET /home 200 2ms (module=router)
+```
+
+**Example: filter logs by level**
+
+```
+$ tail log/web.log | bunyan -l warn
+```
+```
+[2015-10-25T13:54:25.429Z]  WARN: web/58045 on localhost.local: log.stage() is deprecated and will be removed in a future release. Use log.debug(), log.info(), log.warn(), log.error(), log.trace() instead.
 ```

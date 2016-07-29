@@ -4,7 +4,7 @@
   "description": "DADI Logger",
   "main": "dadi/index.js",
   "scripts": {
-    "test": "standard 'index.js' && ./node_modules/.bin/istanbul cover --report cobertura --report text --report html --report lcov ./node_modules/.bin/_mocha test",
+    "test": "standard 'dadi/index.js' && ./node_modules/.bin/istanbul cover --report cobertura --report text --report html --report lcov ./node_modules/.bin/_mocha test",
     "posttest": "./scripts/coverage.js"
   },
   "dependencies": {

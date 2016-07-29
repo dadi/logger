@@ -3,20 +3,26 @@
  */
 var bunyan = require('bunyan') // underlying logger
 var KinesisStream = require('aws-kinesis-writable') // kinesis
-var fs = require('fs') // to hand filestreams to bunyan
 var mkdirp = require('mkdirp') // recursive mkdir
 var moment = require('moment') // datestamps and timing
 var path = require('path')
-var util = require('util')
 var _ = require('underscore')
 
-var enabled // allow logging?
 var logPath // where to log
 var accessLogPath // where to stick accessLogs
 var log // logger instances
 var accessLog // access log gets it's own instance
-var opts
 var env // development, production, etc
+
+var defaults = {
+  enabled: false,
+  level: 'info',
+  path: './log',
+  extension: '.log',
+  accessLog: {
+    enabled: false
+  }
+}
 
 var trackRequestCount = true
 var stats = {
@@ -26,7 +32,8 @@ var stats = {
 function setOptions (options, awsConfig, environment) {
   env = environment
 
-  enabled = options.enabled
+  options = _.extend(defaults, options)
+
   logPath = path.resolve(options.path + '/' + options.filename + '.' + env + '.' + options.extension)
   accessLogPath = path.resolve(options.path + '/' + options.filename + '.access.' + options.extension)
 
