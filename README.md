@@ -113,7 +113,7 @@ app.use(logger.requestLogger)
 
 The request log contains a stream of JSON records. Each record contains a msg property containing details about the HTTP request, formatted using the nginx server log format.
 
-** Raw log record**
+**Raw log record**
 ```
 {"name":"access","hostname":"localhost","pid":3002,"level":30,"msg":"127.0.0.1 - 2016-07-28T13:24:13+08:00 GET /news?page=3 HTTP/1.1 200 17529 Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36","time":"2016-07-28T05:24:13.460Z","v":0}
 ```
