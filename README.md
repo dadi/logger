@@ -26,16 +26,16 @@ DADI Logger can be initialised with three parameters: log configuration,
 AWS configuration and run environment. Only the first parameter is required: environment
 defaults to `development`.
 
-|Property|Description|Default|Example
-|-|-|-|-
-|enabled|If true, logging is enabled using the following settings|false|true
-|level|The threshold for writing to the log. Levels: `debug`, `info`, `warn`, `error`, `trace` |"info"|"warn"
-|path|The absolute or relative path to the directory for log files|"./log"|"/var/log/"
-|filename|The filename to use for logs, without extension||"web"
-|extension|The file extension to use for logs|".log"|".txt"
-|**accessLog**||||
-|enabled|If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `web.access.log`|false|true
-|kinesisStream|An AWS Kinesis stream to write to log records to||||
+Property|Description|Default|Example
+--------|-----------|-------|-------
+enabled|If true, logging is enabled using the following settings|false|true
+level|The threshold for writing to the log. Levels: `debug`, `info`, `warn`, `error`, `trace` |"info"|"warn"
+path|The absolute or relative path to the directory for log files|"./log"|"/var/log/"
+filename|The filename to use for logs, without extension| |"web"
+extension|The file extension to use for logs|".log"|".txt"
+accessLog| | | |
+enabled|If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `web.access.log`|false|true
+kinesisStream|An AWS Kinesis stream to write to log records to| | | 
 
 ```js
 var logConfig = {
