@@ -5,7 +5,8 @@
   "main": "dadi/index.js",
   "scripts": {
     "test": "standard 'dadi/index.js' && ./node_modules/.bin/istanbul cover --report cobertura --report text --report html --report lcov ./node_modules/.bin/_mocha test",
-    "posttest": "./scripts/coverage.js"
+    "posttest": "./scripts/coverage.js",
+    "postpublish": "greenkeeper-postpublish"
   },
   "dependencies": {
     "aws-kinesis-writable": "^1.3.1",
@@ -28,6 +29,7 @@
   "license": "ISC",
   "devDependencies": {
     "chai": "^3.5.0",
+    "greenkeeper-postpublish": "^1.0.0",
     "istanbul": "^0.4.4",
     "istanbul-cobertura-badger": "^1.2.1",
     "jasmine": "^2.4.1",
