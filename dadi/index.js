@@ -87,7 +87,6 @@ function initAccessLog (options, awsConfig) {
         serializers: bunyan.stdSerializers,
         streams: [
           {
-            type: 'rotating-file',
             path: accessLogPath
           }
         ]
