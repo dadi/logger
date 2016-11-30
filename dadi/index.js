@@ -134,7 +134,7 @@ var self = module.exports = {
   },
 
   access: function access () {
-    if (this.options.accessLog.enabled) {
+    if (this.options.accessLog && this.options.accessLog.enabled) {
       try {
         accessLog.info.apply(accessLog, arguments)
       } catch (err) {
