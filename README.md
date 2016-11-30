@@ -1,6 +1,9 @@
 # DADI Logger
 
-[![npm (scoped)](https://img.shields.io/npm/v/@dadi/logger.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/logger)&nbsp;[![coverage](https://img.shields.io/badge/coverage-72%25-yellow.svg?style=flat-square)](https://github.com/dadi/logger)&nbsp;[![Build](http://ci.dadi.technology/dadi/logger/badge?branch=master&service=shield)](http://ci.dadi.technology/dadi/logger)&nbsp;[![JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](http://standardjs.com/)
+[![npm (scoped)](https://img.shields.io/npm/v/@dadi/logger.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/logger)
+[![coverage](https://img.shields.io/badge/coverage-70%25-yellow.svg?style=flat-square)](https://github.com/dadi/logger)
+[![Build Status](https://travis-ci.org/dadi/logger.svg?branch=master)](https://travis-ci.org/dadi/logger)
+[![JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](http://standardjs.com/)
 
 ## Overview
 
@@ -35,7 +38,7 @@ filename|The filename to use for logs, without extension| |"web"
 extension|The file extension to use for logs|".log"|".txt"
 accessLog| | | |
 enabled|If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `web.access.log`|false|true
-kinesisStream|An AWS Kinesis stream to write to log records to| | | 
+kinesisStream|An AWS Kinesis stream to write to log records to| | |
 
 ```js
 var logConfig = {
