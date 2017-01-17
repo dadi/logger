@@ -95,6 +95,7 @@ function initAccessLog (options, awsConfig) {
   }
 
   if (options.accessLog.enabled &&
+    options.accessLog.kinesisStream &&
     options.accessLog.kinesisStream !== '' &&
     awsConfig !== null) {
     // Create a log stream
