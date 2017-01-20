@@ -1,12 +1,13 @@
 {
   "name": "@dadi/logger",
-  "version": "1.1.5",
+  "version": "0.0.0-development",
   "description": "DADI Logger",
   "main": "dadi/index.js",
   "scripts": {
     "test": "standard 'dadi/index.js' && ./node_modules/.bin/istanbul cover --report cobertura --report text --report html --report lcov ./node_modules/.bin/_mocha test",
     "posttest": "./scripts/coverage.js",
-    "postpublish": "greenkeeper-postpublish"
+    "postpublish": "greenkeeper-postpublish",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "dependencies": {
     "aws-kinesis-writable": "^2.0.0",
@@ -19,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dadi/logger.git"
+    "url": "https://github.com/dadi/logger.git"
   },
   "bugs": {
     "url": "https://github.com/dadi/logger/issues"
@@ -34,6 +35,7 @@
     "istanbul-cobertura-badger": "^1.2.1",
     "jasmine": "^2.5.2",
     "mocha": "^3.2.0",
-    "standard": "^8.6.0"
+    "standard": "^8.6.0",
+    "semantic-release": "^6.3.2"
   }
 }
