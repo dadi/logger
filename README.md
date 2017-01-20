@@ -38,8 +38,23 @@ path|The absolute or relative path to the directory for log files|"./log"|"/var/
 filename|The filename to use for logs, without extension| |"web"
 extension|The file extension to use for logs|".log"|".txt"
 accessLog| | | |
-enabled|If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `web.access.log`|false|true
-kinesisStream|An AWS Kinesis stream to write to log records to| | |
+accessLog.enabled|If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `web.access.log`|false|true
+accessLog.kinesisStream|The name of an AWS Kinesis stream to write to| | |
+
+##### Alternative access log options for AWS Kinesis
+
+Property|Description|Default|Example
+--------|-----------|-------|-------
+accessLog| | | |
+accessLog.enabled|If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `web.access.log`|false|true
+accessLog.kinesis| | | |
+accessLog.kinesis.stream| The name of an AWS Kinesis stream to write to log records to| | |
+accessLog.kinesis.partitionKey | used to group data by shard within a stream. Partition keys are Unicode strings with a maximum length limit of 256 bytes | a function that returns the current epoch | 'my_web_app'
+accessLog.kinesis.buffer | | | |
+accessLog.kinesis.buffer.timeout | messages sent X seconds after the last batch of messages sent.| 5 seconds | 10
+accessLog.kinesis.buffer.length | messages sent when X messages are queued waiting to be sent | Default: 10 messages | 100
+}
+
 
 ```js
 var logConfig = {
@@ -51,6 +66,23 @@ var logConfig = {
   accessLog: {
     enabled: true,
     kinesisStream: "stream_name"
+  }
+}
+
+// Alternative access log options for AWS Kinesis
+var logConfig = {
+  enabled: true,
+  ...
+  accessLog: {
+    enabled: true,
+    kinesis: {
+      stream: 'stream_name',
+      partitionKey: 'my_web_app',
+      buffer: {
+        timeout: 10,
+        length: 100
+      }
+    }
   }
 }
 

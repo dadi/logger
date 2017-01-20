@@ -1,5 +1,6 @@
 var assert = require('chai').assert
 var memoryStream = require('memorystream')
+var should = require('should')
 
 /*
  * Generate a Mock httpServer Request and Response
@@ -53,6 +54,7 @@ describe('Request Logger', function () {
   it('should log a request', function (done) {
     var testHttp = generateMockRequestAndResponse()
     var chunks = 0
+
     memstream.on('data', function (chunk) {
       var output = JSON.parse(chunk.toString())
       chunks++
@@ -86,14 +88,85 @@ describe('Request Logger', function () {
       if (output.name === 'dadi.test') {
         assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
         assert(output.msg.indexOf('200') !== -1, 'contains status')
-      }else if (output.name === 'access') {
+      } else if (output.name === 'access') {
         assert(output.msg.indexOf('8.8.8.8') !== -1, 'contains IP address')
         assert(output.msg.indexOf('http://google.com') !== -1, 'contains referer')
         assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
         assert(output.msg.indexOf('Mozilla/5.0') !== -1, 'contains user agent')
       }
-      if (chunks >= 2) return done() // only finish after accesslog and info
+
+      if (chunks >= 2) {
+        memstream = null
+        return done() // only finish after accesslog and info
+      }
     })
+
     logger.requestLogger(testHttp.req, testHttp.res, testHttp.next) // fire
+  })
+
+  it('should initialise a Kinesis stream with default options', function (done) {
+    delete require.cache[require.resolve('./../dadi/index.js')]
+    var logger = require('./../dadi/index.js')
+    var memstream = new memoryStream() // save ourselves from the fs rabbit hole
+
+    logger.init({
+      accessLog: {
+        enabled: true,
+        kinesisStream: 'test'
+      },
+      enabled: true,
+      filename: 'test',
+      level: 'trace',
+      path: 'log/',
+      testStream: [{level: 'trace', stream: memstream}]
+    }, {}, 'test')
+
+    // get the second stream that was added
+    var theStream = logger.getAccessLog().streams[1].stream
+
+    should.exist(theStream._params)
+    theStream._params.streamName.should.eql('test')
+    theStream._params.buffer.timeout.should.eql(5)
+    theStream._params.buffer.length.should.eql(10)
+
+    theStream._params.partitionKey().should.eql('dadi')
+
+    done()
+  })
+
+  it('should initialise a Kinesis stream with specified options', function (done) {
+    delete require.cache[require.resolve('./../dadi/index.js')]
+    var logger = require('./../dadi/index.js')
+    var memstream = new memoryStream() // save ourselves from the fs rabbit hole
+
+    logger.init({
+      accessLog: {
+        enabled: true,
+        kinesis: {
+          stream: 'test-stream',
+          buffer: {
+            timeout: 10,
+            length: 100
+          }
+        }
+      },
+      enabled: true,
+      filename: 'test',
+      level: 'trace',
+      path: 'log/',
+      testStream: [{level: 'trace', stream: memstream}]
+    }, {}, 'test')
+
+    // get the second stream that was added
+    var theStream = logger.getAccessLog().streams[1].stream
+
+    should.exist(theStream._params)
+    theStream._params.streamName.should.eql('test-stream')
+    theStream._params.buffer.timeout.should.eql(10)
+    theStream._params.buffer.length.should.eql(100)
+
+    theStream._params.partitionKey().should.eql('dadi')
+
+    done()
   })
 })

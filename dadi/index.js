@@ -92,33 +92,57 @@ function initAccessLog (options, awsConfig) {
         ]
       })
     }
+
+    var kinesisOptions = getKinesisStream(options.accessLog, awsConfig)
+
+    // Add An AWS Kinesis log stream
+    if (kinesisOptions.streamName !== '') {
+      accessLog.addStream(
+        {
+          name: 'Kinesis Log Stream',
+          level: 'info',
+          stream: new KinesisStream(kinesisOptions)
+        }
+      )
+
+      var logStream = _.findWhere(accessLog.streams, { 'name': 'Kinesis Log Stream' })
+      logStream.stream.on('error', function (err) { // dump kinesis errors
+        console.log(err)
+        log.warn(err)
+      })
+    }
+  }
+}
+
+function getKinesisStream (options, awsConfig) {
+  var kinesisOptions = {
+    streamName: '',
+    partitionKey: 'dadi',
+    buffer: {
+      timeout: 5,
+      length: 10
+    }
   }
 
-  if (options.accessLog.enabled &&
-    options.accessLog.kinesisStream &&
-    options.accessLog.kinesisStream !== '' &&
-    awsConfig !== null) {
-    // Create a log stream
-    accessLog.addStream(
-      {
-        name: 'Kinesis Log Stream',
-        level: 'info',
-        stream: new KinesisStream({
-          accessKeyId: awsConfig.accessKeyId,
-          secretAccessKey: awsConfig.secretAccessKey,
-          region: awsConfig.region,
-          streamName: options.accessLog.kinesisStream,
-          partitionKey: 'dadi-web'
-        })
-      }
-    )
-
-    var logStream = _.findWhere(accessLog.streams, { 'name': 'Kinesis Log Stream' })
-    logStream.stream.on('error', function (err) { // dump kinesis errors
-      console.log(err)
-      log.warn(err)
-    })
+  if (!awsConfig) {
+    return kinesisOptions
   }
+
+  // add AWS config
+  kinesisOptions.accessKeyId = awsConfig.accessKeyId
+  kinesisOptions.secretAccessKey = awsConfig.secretAccessKey
+  kinesisOptions.region = awsConfig.region
+
+  if (options.kinesisStream && options.kinesisStream !== '') {
+    kinesisOptions.streamName = options.kinesisStream
+  }
+
+  if (options.kinesis) {
+    kinesisOptions = _.extend(kinesisOptions, options.kinesis)
+    kinesisOptions.streamName = options.kinesis.stream
+  }
+
+  return kinesisOptions
 }
 
 var self = module.exports = {
