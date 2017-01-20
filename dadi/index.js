@@ -114,7 +114,7 @@ function initAccessLog (options, awsConfig) {
   }
 }
 
-function getKinesisStream(options, awsConfig) {
+function getKinesisStream (options, awsConfig) {
   var kinesisOptions = {
     streamName: '',
     partitionKey: 'dadi',
