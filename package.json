@@ -29,7 +29,7 @@
   "author": "DADI <team@dadi.tech>",
   "license": "ISC",
   "devDependencies": {
-    "chai": "^3.5.0",
+    "chai": "^4.0.0",
     "greenkeeper-postpublish": "^1.0.1",
     "istanbul": "^0.4.5",
     "istanbul-cobertura-badger": "^1.2.1",
