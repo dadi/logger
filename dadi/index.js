@@ -42,10 +42,6 @@ function setOptions (options, awsConfig, environment) {
     if (err) {
       module.exports.error(err)
     }
-
-    if (made) {
-      module.exports.info('Log directory created at ' + made)
-    }
   })
 
   log = bunyan.createLogger({
