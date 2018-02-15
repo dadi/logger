@@ -58,6 +58,13 @@ function setOptions (options, awsConfig, environment) {
 }
 
 function getStreams (options) {
+  // allow stdout/stderr to be used instead of log files
+  if (options.stream) {
+    const level = options.level || 'error'
+    const stream = options.stream === 'stderr' ? process.stderr : process.stdout
+    return [{ level, stream }]
+  }
+
   if (options.testStream) { // override for testing
     return options.testStream
   }
