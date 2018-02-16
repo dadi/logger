@@ -67,6 +67,13 @@ function getStreams (options) {
         stream: options.instance
       }]
     }
+
+    if (options.library) {
+      const streamLibrary = options.library
+      const streamOptions = options.stream.options || undefined
+      const stream = new streamLibrary(streamOptions)
+      return [{ level, stream }]
+    }
   }
 
   if (options.testStream) { // override for testing
