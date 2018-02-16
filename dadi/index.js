@@ -58,6 +58,17 @@ function setOptions (options, awsConfig, environment) {
 }
 
 function getStreams (options) {
+  if (options.stream && options.stream.enabled) {
+    const level = options.level || 'error'
+
+    if (options.instance) {
+      return [{
+        level,
+        stream: options.instance
+      }]
+    }
+  }
+
   if (options.testStream) { // override for testing
     return options.testStream
   }
