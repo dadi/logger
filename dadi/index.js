@@ -69,9 +69,9 @@ function getStreams (options) {
     }
 
     if (options.stream.library) {
-      const streamLibrary = options.stream.library
+      const StreamLibrary = options.stream.library
       const streamOptions = options.stream.options || undefined
-      const stream = new streamLibrary(streamOptions)
+      const stream = new StreamLibrary(streamOptions)
       return [{ level, stream }]
     }
   }
