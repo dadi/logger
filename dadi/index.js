@@ -61,15 +61,15 @@ function getStreams (options) {
   if (options.stream && options.stream.enabled) {
     const level = options.level || 'error'
 
-    if (options.instance) {
+    if (options.stream.instance) {
       return [{
         level,
-        stream: options.instance
+        stream: options.stream.instance
       }]
     }
 
-    if (options.library) {
-      const streamLibrary = options.library
+    if (options.stream.library) {
+      const streamLibrary = options.stream.library
       const streamOptions = options.stream.options || undefined
       const stream = new streamLibrary(streamOptions)
       return [{ level, stream }]
