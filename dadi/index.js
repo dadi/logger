@@ -47,7 +47,7 @@ function setOptions (options, awsConfig, environment) {
   log = bunyan.createLogger({
     name: 'dadi-' + options.filename,
     serializers: bunyan.stdSerializers,
-    streams: getStreams(options)
+    streams: getStreams(options, 'error')
   })
 
   if (env === 'development') {
@@ -57,55 +57,52 @@ function setOptions (options, awsConfig, environment) {
   initAccessLog(options, awsConfig)
 }
 
-function getStreams (options) {
-  if (options.stream && options.stream.enabled) {
-    const level = options.level || 'error'
+function getStreams (options, defaultLevel) {
+  const level = options.level || defaultLevel || 'error'
+  const streamInstance = getStreamInstance(options, level)
+  const streamLibraryInstance = getStreamLibraryInstance(options, level)
 
-    if (options.stream.instance) {
-      return [{
-        level,
-        stream: options.stream.instance
-      }]
-    }
+  if (streamInstance) return streamInstance
+  if (streamLibraryInstance) return streamLibraryInstance
 
-    if (options.stream.library) {
-      const StreamLibrary = options.stream.library
-      const streamOptions = options.stream.options || undefined
-      const stream = new StreamLibrary(streamOptions)
-      return [{ level, stream }]
-    }
+  if (defaultLevel === 'access') {
+    return [{
+      path: accessLogPath
+    }]
+  } else {
+    return [
+      { level: 'info', path: logPath },
+      { level: 'warn', path: logPath },
+      { level: 'error', path: logPath }
+    ]
   }
+}
 
-  if (options.testStream) { // override for testing
-    return options.testStream
+function getStreamInstance (options, level) {
+  if (options.stream && options.stream.instance) {
+    return [{
+      level,
+      stream: options.stream.instance
+    }]
   }
+}
 
-  return [
-    { level: 'info', path: logPath },
-    { level: 'warn', path: logPath },
-    { level: 'error', path: logPath }
-  ]
+function getStreamLibraryInstance (options, level) {
+  if (options.stream && options.stream.library) {
+    const StreamLibrary = options.stream.library
+    const streamOptions = options.stream.options || undefined
+    const stream = new StreamLibrary(streamOptions)
+    return [{ level, stream }]
+  }
 }
 
 function initAccessLog (options, awsConfig) {
   if (options.accessLog.enabled) {
-    if (options.testStream) { // test intercept
-      accessLog = bunyan.createLogger({
-        name: 'access',
-        serializers: bunyan.stdSerializers,
-        streams: options.testStream
-      })
-    } else {
-      accessLog = bunyan.createLogger({
-        name: 'access',
-        serializers: bunyan.stdSerializers,
-        streams: [
-          {
-            path: accessLogPath
-          }
-        ]
-      })
-    }
+    accessLog = bunyan.createLogger({
+      name: 'access',
+      serializers: bunyan.stdSerializers,
+      streams: getStreams(options, 'access')
+    })
   }
 
   if (options.accessLog.enabled &&

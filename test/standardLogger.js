@@ -15,7 +15,9 @@ describe('Standard Logger', function () {
     filename: 'test',
     level: 'trace',
     path: 'log/',
-    testStream: [{level: 'trace', stream: memstream}]
+    stream: {
+      instance: memstream
+    }
   }, null, 'test')
 
   it('should log at the trace level', function (done) {
