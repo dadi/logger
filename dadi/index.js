@@ -60,10 +60,10 @@ function setOptions (options, awsConfig, environment) {
 function getStreams (options, defaultLevel) {
   const level = options.level || defaultLevel || 'error'
   const streamInstance = getStreamInstance(options, level)
-  const streamLibraryInstance = getStreamLibraryInstance(options, level)
 
-  if (streamInstance) return streamInstance
-  if (streamLibraryInstance) return streamLibraryInstance
+  if (streamInstance) {
+    return streamInstance
+  }
 
   if (defaultLevel === 'access') {
     return [{
@@ -79,20 +79,11 @@ function getStreams (options, defaultLevel) {
 }
 
 function getStreamInstance (options, level) {
-  if (options.stream && options.stream.instance) {
+  if (options.stream && typeof options.stream === 'object') {
     return [{
       level,
-      stream: options.stream.instance
+      stream: options.stream
     }]
-  }
-}
-
-function getStreamLibraryInstance (options, level) {
-  if (options.stream && options.stream.library) {
-    const StreamLibrary = options.stream.library
-    const streamOptions = options.stream.options || undefined
-    const stream = new StreamLibrary(streamOptions)
-    return [{ level, stream }]
   }
 }
 

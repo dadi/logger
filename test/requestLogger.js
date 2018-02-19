@@ -47,9 +47,7 @@ describe('Request Logger', function () {
     filename: 'test',
     level: 'trace',
     path: 'log/',
-    stream: {
-      instance: memstream
-    }
+    stream: memstream
   }, null, 'test')
 
   it('should log a request', function (done) {
