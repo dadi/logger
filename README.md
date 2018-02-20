@@ -1,7 +1,7 @@
 # DADI Logger
 
 [![npm (scoped)](https://img.shields.io/npm/v/@dadi/logger.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/logger)
-[![coverage](https://img.shields.io/badge/coverage-72%25-yellow.svg?style=flat-square)](https://github.com/dadi/logger)
+[![coverage](https://img.shields.io/badge/coverage-72%2525-yellow.svg?style=flat?style=flat-square)](https://github.com/dadi/logger)
 [![Build Status](https://travis-ci.org/dadi/logger.svg?branch=master)](https://travis-ci.org/dadi/logger)
 [![JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](http://standardjs.com/)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square)](https://github.com/semantic-release/semantic-release)
@@ -34,6 +34,7 @@ Property|Description|Default|Example
 --------|-----------|-------|-------
 enabled|If true, logging is enabled using the following settings|false|true
 level|The threshold for writing to the log. Levels: `debug`, `info`, `warn`, `error`, `trace` |"info"|"warn"
+stream|The stream instance to write the log to||`process.stdout`
 path|The absolute or relative path to the directory for log files|"./log"|"/var/log/"
 filename|The filename to use for logs, without extension| |"web"
 extension|The file extension to use for logs|".log"|".txt"

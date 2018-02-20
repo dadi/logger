@@ -47,7 +47,7 @@ function setOptions (options, awsConfig, environment) {
   log = bunyan.createLogger({
     name: 'dadi-' + options.filename,
     serializers: bunyan.stdSerializers,
-    streams: getStreams(options)
+    streams: getStreams(options, 'error')
   })
 
   if (env === 'development') {
@@ -57,37 +57,43 @@ function setOptions (options, awsConfig, environment) {
   initAccessLog(options, awsConfig)
 }
 
-function getStreams (options) {
-  if (options.testStream) { // override for testing
-    return options.testStream
+function getStreams (options, defaultLevel) {
+  const level = options.level || defaultLevel || 'error'
+  const streamInstance = getStreamInstance(options, level)
+
+  if (streamInstance) {
+    return streamInstance
   }
 
-  return [
-    { level: 'info', path: logPath },
-    { level: 'warn', path: logPath },
-    { level: 'error', path: logPath }
-  ]
+  if (defaultLevel === 'access') {
+    return [{
+      path: accessLogPath
+    }]
+  } else {
+    return [
+      { level: 'info', path: logPath },
+      { level: 'warn', path: logPath },
+      { level: 'error', path: logPath }
+    ]
+  }
+}
+
+function getStreamInstance (options, level) {
+  if (options.stream && typeof options.stream === 'object') {
+    return [{
+      level,
+      stream: options.stream
+    }]
+  }
 }
 
 function initAccessLog (options, awsConfig) {
   if (options.accessLog.enabled) {
-    if (options.testStream) { // test intercept
-      accessLog = bunyan.createLogger({
-        name: 'access',
-        serializers: bunyan.stdSerializers,
-        streams: options.testStream
-      })
-    } else {
-      accessLog = bunyan.createLogger({
-        name: 'access',
-        serializers: bunyan.stdSerializers,
-        streams: [
-          {
-            path: accessLogPath
-          }
-        ]
-      })
-    }
+    accessLog = bunyan.createLogger({
+      name: 'access',
+      serializers: bunyan.stdSerializers,
+      streams: getStreams(options, 'access')
+    })
   }
 
   if (options.accessLog.enabled &&
