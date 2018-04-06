@@ -50,10 +50,6 @@ function setOptions (options, awsConfig, environment) {
     streams: getStreams(options, 'error')
   })
 
-  if (env === 'development') {
-    log.addStream({ level: 'debug', stream: process.stdout })
-  } // cli logs in dev
-
   initAccessLog(options, awsConfig)
 }
 
