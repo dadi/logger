@@ -6,7 +6,6 @@ var KinesisStream = require('aws-kinesis-writable') // kinesis
 var mkdirp = require('mkdirp') // recursive mkdir
 var moment = require('moment') // datestamps and timing
 var path = require('path')
-var _ = require('underscore')
 
 var logPath // where to log
 var accessLogPath // where to stick accessLogs
@@ -32,7 +31,7 @@ var stats = {
 function setOptions (options, awsConfig, environment) {
   env = environment
 
-  options = _.extend(defaults, options)
+  options = Object.assign({}, defaults, options)
 
   logPath = path.resolve(options.path + '/' + options.filename + '.' + env + '.' + options.extension)
   accessLogPath = path.resolve(options.path + '/' + options.filename + '.access.' + options.extension)
@@ -92,11 +91,10 @@ function initAccessLog (options, awsConfig) {
     })
   }
 
-  if (options.accessLog.enabled &&
+  if (accessLog &&
     options.accessLog.kinesisStream &&
     options.accessLog.kinesisStream !== '' &&
     awsConfig !== null) {
-    // Create a log stream
     accessLog.addStream(
       {
         name: 'Kinesis Log Stream',
@@ -111,7 +109,7 @@ function initAccessLog (options, awsConfig) {
       }
     )
 
-    var logStream = _.findWhere(accessLog.streams, { 'name': 'Kinesis Log Stream' })
+    var logStream = accessLog.streams.find(stream => stream.name === 'Kinesis Log Stream')
     logStream.stream.on('error', function (err) { // dump kinesis errors
       console.log(err)
       log.warn(err)
@@ -220,8 +218,8 @@ var getClientIpAddress = function (input) {
   var ips = input.split(',')
   var result = ''
 
-  ips.forEach(function (ip) {
-    if ((ip.match(validIpAddress) && !ip.match(privateIpAddress)) || isValidIPv6(ip)) {
+  ips.forEach(ip => {
+    if (isValidIPv6(ip) || (ip.match(validIpAddress) && !ip.match(privateIpAddress))) {
       result = ip
     }
   })
