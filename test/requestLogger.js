@@ -1,5 +1,5 @@
-var assert = require('chai').assert
-var memoryStream = require('memorystream')
+const assert = require('chai').assert
+const memoryStream = require('memorystream')
 
 /*
  * Generate a Mock httpServer Request and Response
@@ -9,7 +9,7 @@ var memoryStream = require('memorystream')
  * @PARAM url - the url/path
  */
 function generateMockRequestAndResponse (statusCode, forwarded, ip, url) {
-  var req = {
+  let req = {
     connection: {
       remoteAddress: ip || '8.8.8.8'
     },
@@ -26,40 +26,50 @@ function generateMockRequestAndResponse (statusCode, forwarded, ip, url) {
     req.connection.remoteAddress = '8.8.4.4'
     req.headers['x-forwarded-for'] = ip || '8.8.8.8'
   }
-  var res = {
-    end: function () { return true; },
+  let res = {
+    end: function () { return true },
+    _headers: {
+      'content-length': 305
+    },
     statusCode: statusCode || 200
   }
-  return {res: res, req: req, next: function () { res.end(); }}
+  return {res: res, req: req, next: function () { res.end() }}
 }
 
 describe('Request Logger', function () {
-  // our logger is a singleton, but we need a clean instance
-  delete require.cache[require.resolve('./../dadi/index.js')]
-  var logger = require('./../dadi/index.js')
-  var memstream = new memoryStream() // save ourselves from the fs rabbit hole
+  let logger
+  let memstream
 
-  logger.init({
-    accessLog: {
-      enabled: true
-    },
-    enabled: true,
-    filename: 'test',
-    level: 'trace',
-    path: 'log/',
-    stream: memstream
-  }, null, 'test')
+  beforeEach(function (done) {
+    // our logger is a singleton, but we need a clean instance
+    delete require.cache[require.resolve('./../dadi/index.js')]
+    logger = require('./../dadi/index.js')
+    memstream = new memoryStream() // save ourselves from the fs rabbit hole
+
+    logger.init({
+      accessLog: {
+        enabled: true
+      },
+      enabled: true,
+      filename: 'test',
+      level: 'trace',
+      path: 'log/',
+      stream: memstream
+    }, null, 'test')
+
+    done()
+  })
 
   it('should log a request', function (done) {
-    var testHttp = generateMockRequestAndResponse()
-    var chunks = 0
+    let testHttp = generateMockRequestAndResponse()
+    let chunks = 0
     memstream.on('data', function (chunk) {
-      var output = JSON.parse(chunk.toString())
+      let output = JSON.parse(chunk.toString())
       chunks++
       if (output.name === 'dadi.test') {
         assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
         assert(output.msg.indexOf('200') !== -1, 'contains status')
-      }else if (output.name === 'access') {
+      } else if (output.name === 'access') {
         assert(output.msg.indexOf('8.8.8.8') !== -1, 'contains IP address')
         assert(output.msg.indexOf('http://google.com') !== -1, 'contains referer')
         assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
@@ -73,21 +83,60 @@ describe('Request Logger', function () {
     logger.requestLogger(testHttp.req, testHttp.res, testHttp.next) // fire
   })
 
-  it('should keep a count of requests', function () {
-    assert(logger.stats.requests === 1, 'correct amount of requests logged')
-  })
-
-  it('should handle x-forwarded-for correctly', function (done) {
-    var chunks = 0
-    var testHttp = generateMockRequestAndResponse(200, true)
+  it('should keep a count of requests', function (done) {
+    let testHttp = generateMockRequestAndResponse()
+    let chunks = 0
     memstream.on('data', function (chunk) {
-      var output = JSON.parse(chunk.toString())
+      let output = JSON.parse(chunk.toString())
       chunks++
       if (output.name === 'dadi.test') {
         assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
         assert(output.msg.indexOf('200') !== -1, 'contains status')
-      }else if (output.name === 'access') {
+      } else if (output.name === 'access') {
         assert(output.msg.indexOf('8.8.8.8') !== -1, 'contains IP address')
+        assert(output.msg.indexOf('http://google.com') !== -1, 'contains referer')
+        assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
+        assert(output.msg.indexOf('Mozilla/5.0') !== -1, 'contains user agent')
+      }
+      if (chunks >= 2) {
+        assert(logger.stats.requests === 1, 'correct amount of requests logged')
+        return done() // only finish after accesslog and info
+      }
+    })
+    logger.requestLogger(testHttp.req, testHttp.res, testHttp.next) // fire
+  })
+
+  it('should handle x-forwarded-for correctly', function (done) {
+    let chunks = 0
+    let testHttp = generateMockRequestAndResponse(200, true)
+    memstream.on('data', function (chunk) {
+      let output = JSON.parse(chunk.toString())
+      chunks++
+      if (output.name === 'dadi.test') {
+        assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
+        assert(output.msg.indexOf('200') !== -1, 'contains status')
+      } else if (output.name === 'access') {
+        assert(output.msg.indexOf('8.8.8.8') !== -1, 'contains IP address')
+        assert(output.msg.indexOf('http://google.com') !== -1, 'contains referer')
+        assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
+        assert(output.msg.indexOf('Mozilla/5.0') !== -1, 'contains user agent')
+      }
+      if (chunks >= 2) return done() // only finish after accesslog and info
+    })
+    logger.requestLogger(testHttp.req, testHttp.res, testHttp.next) // fire
+  })
+
+  it('should handle IPv6 address', function (done) {
+    let chunks = 0
+    let testHttp = generateMockRequestAndResponse(200, false, '2001:0db8:85a3:0000:0000:8a2e:0370:7334')
+    memstream.on('data', function (chunk) {
+      let output = JSON.parse(chunk.toString())
+      chunks++
+      if (output.name === 'dadi.test') {
+        assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
+        assert(output.msg.indexOf('200') !== -1, 'contains status')
+      } else if (output.name === 'access') {
+        assert(output.msg.indexOf('2001:0db8:85a3:0000:0000:8a2e:0370:7334') !== -1, 'contains IP address')
         assert(output.msg.indexOf('http://google.com') !== -1, 'contains referer')
         assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
         assert(output.msg.indexOf('Mozilla/5.0') !== -1, 'contains user agent')
