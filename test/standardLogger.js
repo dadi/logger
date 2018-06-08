@@ -68,6 +68,36 @@ describe('Standard Logger', function () {
     logger.error('error')
   })
 
+  it('should add a Kinesis log stream if configured', function (done) {
+    var loggerTwo = require('./../dadi/index.js')
+    var memstreamTwo = new memoryStream()
+
+    loggerTwo.init(
+      {
+        accessLog: {
+          enabled: true,
+          kinesisStream: 'testKinesis'
+        },
+        enabled: true,
+        filename: 'test',
+        level: 'trace',
+        path: 'log/',
+        stream: memstreamTwo
+      },
+      {
+        accessKeyId: '',
+        secretAccessKey: '',
+        region: ''
+      },
+    'test')
+
+    let log = loggerTwo.getAccessLog()
+
+    assert(log.streams.length === 2)
+    assert(log.streams[1].name === 'Kinesis Log Stream')
+    done()
+  })
+
   // @TODO re-enable once fatal is implemented
   // it('should log at the fatal level', function(done){
   //   memstream.once('data', function(chunk){
@@ -78,5 +108,4 @@ describe('Standard Logger', function () {
   //
   //   logger.fatal('fatal')
   // })
-
 })
