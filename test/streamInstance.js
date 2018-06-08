@@ -1,12 +1,12 @@
-var assert = require('chai').assert
-var memoryStream = require('memorystream')
+const assert = require('chai').assert
+const memoryStream = require('memorystream')
 
 describe('Stream Instance', function () {
   // our logger is a singleton, but we need a clean instance
   delete require.cache[require.resolve('./../dadi/index.js')]
-  var logger = require('./../dadi/index.js')
-  var memstream = new memoryStream()
-  
+  let logger = require('./../dadi/index.js')
+  let memstream = new memoryStream()
+
   logger.init({
     accessLog: {
       enabled: false // no access log, only expecting single messages
@@ -17,10 +17,10 @@ describe('Stream Instance', function () {
     path: 'log/',
     stream: memstream
   }, null, 'test')
-  
+
   it('should log to the provided stream instance', function (done) {
     memstream.once('data', function (chunk) {
-      var output = JSON.parse(chunk.toString())
+      let output = JSON.parse(chunk.toString())
       assert(output.msg === 'test')
       done()
     })

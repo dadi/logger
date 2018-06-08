@@ -3,3 +3,4 @@ log/
 coverage/
 scripts/coverage.svg
 npm-debug.log
+.DS_Store

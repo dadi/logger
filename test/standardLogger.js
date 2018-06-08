@@ -1,11 +1,11 @@
-var assert = require('chai').assert
-var memoryStream = require('memorystream')
+const assert = require('chai').assert
+const memoryStream = require('memorystream')
 
 describe('Standard Logger', function () {
   // our logger is a singleton, but we need a clean instance
   delete require.cache[require.resolve('./../dadi/index.js')]
-  var logger = require('./../dadi/index.js')
-  var memstream = new memoryStream()
+  let logger = require('./../dadi/index.js')
+  let memstream = new memoryStream()
 
   logger.init({
     accessLog: {
@@ -20,7 +20,7 @@ describe('Standard Logger', function () {
 
   it('should log at the trace level', function (done) {
     memstream.once('data', function (chunk) {
-      var output = JSON.parse(chunk.toString())
+      let output = JSON.parse(chunk.toString())
       assert(output.level === 10, 'trace level')
       done()
     })
@@ -30,7 +30,7 @@ describe('Standard Logger', function () {
 
   it('should log at the debug level', function (done) {
     memstream.once('data', function (chunk) {
-      var output = JSON.parse(chunk.toString())
+      let output = JSON.parse(chunk.toString())
       assert(output.level === 20, 'debug level')
       done()
     })
@@ -40,7 +40,7 @@ describe('Standard Logger', function () {
 
   it('should log at the info level', function (done) {
     memstream.once('data', function (chunk) {
-      var output = JSON.parse(chunk.toString())
+      let output = JSON.parse(chunk.toString())
       assert(output.level === 30, 'info level')
       done()
     })
@@ -50,7 +50,7 @@ describe('Standard Logger', function () {
 
   it('should log at the warn level', function (done) {
     memstream.once('data', function (chunk) {
-      var output = JSON.parse(chunk.toString())
+      let output = JSON.parse(chunk.toString())
       assert(output.level === 40, 'warn level')
       done()
     })
@@ -60,7 +60,7 @@ describe('Standard Logger', function () {
 
   it('should log at the error level', function (done) {
     memstream.once('data', function (chunk) {
-      var output = JSON.parse(chunk.toString())
+      let output = JSON.parse(chunk.toString())
       assert(output.level === 50, 'error level')
       done()
     })
@@ -69,8 +69,8 @@ describe('Standard Logger', function () {
   })
 
   it('should add a Kinesis log stream if configured', function (done) {
-    var loggerTwo = require('./../dadi/index.js')
-    var memstreamTwo = new memoryStream()
+    let loggerTwo = require('./../dadi/index.js')
+    let memstreamTwo = new memoryStream()
 
     loggerTwo.init(
       {
@@ -101,7 +101,7 @@ describe('Standard Logger', function () {
   // @TODO re-enable once fatal is implemented
   // it('should log at the fatal level', function(done){
   //   memstream.once('data', function(chunk){
-  //     var output = JSON.parse(chunk.toString())
+  //     let output = JSON.parse(chunk.toString())
   //     assert(output.level === 60, 'fatal level')
   //     done()
   //   })

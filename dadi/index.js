@@ -1,19 +1,19 @@
 /**
  * @module Log
  */
-var bunyan = require('bunyan') // underlying logger
-var KinesisStream = require('aws-kinesis-writable') // kinesis
-var mkdirp = require('mkdirp') // recursive mkdir
-var moment = require('moment') // datestamps and timing
-var path = require('path')
+const bunyan = require('bunyan') // underlying logger
+const KinesisStream = require('aws-kinesis-writable') // kinesis
+const mkdirp = require('mkdirp') // recursive mkdir
+const moment = require('moment') // datestamps and timing
+const path = require('path')
 
-var logPath // where to log
-var accessLogPath // where to stick accessLogs
-var log // logger instances
-var accessLog // access log gets it's own instance
-var env // development, production, etc
+let logPath // where to log
+let accessLogPath // where to send accessLogs
+let log // logger instances
+let accessLog // access log gets it's own instance
+let env // development, production, etc
 
-var defaults = {
+let defaults = {
   enabled: false,
   level: 'info',
   path: './log',
@@ -23,8 +23,8 @@ var defaults = {
   }
 }
 
-var trackRequestCount = true
-var stats = {
+let trackRequestCount = true
+let stats = {
   requests: 0 // total request count
 }
 
@@ -53,8 +53,8 @@ function setOptions (options, awsConfig, environment) {
 }
 
 function getStreams (options, defaultLevel) {
-  const level = options.level || defaultLevel || 'error'
-  const streamInstance = getStreamInstance(options, level)
+  let level = options.level || defaultLevel || 'error'
+  let streamInstance = getStreamInstance(options, level)
 
   if (streamInstance) {
     return streamInstance
@@ -109,15 +109,16 @@ function initAccessLog (options, awsConfig) {
       }
     )
 
-    var logStream = accessLog.streams.find(stream => stream.name === 'Kinesis Log Stream')
-    logStream.stream.on('error', function (err) { // dump kinesis errors
+    let logStream = accessLog.streams.find(stream => stream.name === 'Kinesis Log Stream')
+
+    logStream.stream.on('error', err => { // dump kinesis errors
       console.log(err)
       log.warn(err)
     })
   }
 }
 
-var self = module.exports = {
+const self = module.exports = {
   options: {},
 
   init: function (options, awsConfig, environment) {
@@ -170,12 +171,12 @@ var self = module.exports = {
 
   // middleware for handling Connect style requests
   requestLogger: function (req, res, next) {
-    var start = Date.now()
-    var _end = res.end // set up a tap in res.end
+    let start = Date.now()
+    let _end = res.end // set up a tap in res.end
     res.end = function () {
-      var duration = Date.now() - start
+      let duration = Date.now() - start
 
-      var clientIpAddress = req.connection.remoteAddress
+      let clientIpAddress = req.connection.remoteAddress
 
       if (req.headers['x-forwarded-for']) {
         clientIpAddress = getClientIpAddress(req.headers['x-forwarded-for'])
@@ -210,13 +211,13 @@ var self = module.exports = {
 /**
  * Get the client IP address from the load balancer's x-forwarded-for header
  */
-var getClientIpAddress = function (input) {
+const getClientIpAddress = function (input) {
   // matches all of the addresses in the private ranges and 127.0.0.1 as a bonus
-  var privateIpAddress = /(^127.0.0.1)|(^10.)|(^172.1[6-9].)|(^172.2[0-9].)|(^172.3[0-1].)|(^192.168.)/
-  var validIpAddress = /(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/
+  let privateIpAddress = /(^127.0.0.1)|(^10.)|(^172.1[6-9].)|(^172.2[0-9].)|(^172.3[0-1].)|(^192.168.)/
+  let validIpAddress = /(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/
 
-  var ips = input.split(',')
-  var result = ''
+  let ips = input.split(',')
+  let result = ''
 
   ips.forEach(ip => {
     if (isValidIPv6(ip) || (ip.match(validIpAddress) && !ip.match(privateIpAddress))) {
@@ -227,8 +228,8 @@ var getClientIpAddress = function (input) {
   return result.trim()
 }
 
-var isValidIPv6 = function (input) {
-  var pattern = /^((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*::((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*|((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4})){7}$/
+const isValidIPv6 = function (input) {
+  let pattern = /^((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*::((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*|((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4})){7}$/
   return pattern.test(input)
 }
 

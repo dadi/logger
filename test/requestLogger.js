@@ -1,5 +1,5 @@
-var assert = require('chai').assert
-var memoryStream = require('memorystream')
+const assert = require('chai').assert
+const memoryStream = require('memorystream')
 
 /*
  * Generate a Mock httpServer Request and Response
@@ -9,7 +9,7 @@ var memoryStream = require('memorystream')
  * @PARAM url - the url/path
  */
 function generateMockRequestAndResponse (statusCode, forwarded, ip, url) {
-  var req = {
+  let req = {
     connection: {
       remoteAddress: ip || '8.8.8.8'
     },
@@ -26,7 +26,7 @@ function generateMockRequestAndResponse (statusCode, forwarded, ip, url) {
     req.connection.remoteAddress = '8.8.4.4'
     req.headers['x-forwarded-for'] = ip || '8.8.8.8'
   }
-  var res = {
+  let res = {
     end: function () { return true },
     _headers: {
       'content-length': 305
@@ -37,8 +37,8 @@ function generateMockRequestAndResponse (statusCode, forwarded, ip, url) {
 }
 
 describe('Request Logger', function () {
-  var logger
-  var memstream
+  let logger
+  let memstream
 
   beforeEach(function (done) {
     // our logger is a singleton, but we need a clean instance
@@ -61,10 +61,10 @@ describe('Request Logger', function () {
   })
 
   it('should log a request', function (done) {
-    var testHttp = generateMockRequestAndResponse()
-    var chunks = 0
+    let testHttp = generateMockRequestAndResponse()
+    let chunks = 0
     memstream.on('data', function (chunk) {
-      var output = JSON.parse(chunk.toString())
+      let output = JSON.parse(chunk.toString())
       chunks++
       if (output.name === 'dadi.test') {
         assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
@@ -84,10 +84,10 @@ describe('Request Logger', function () {
   })
 
   it('should keep a count of requests', function (done) {
-    var testHttp = generateMockRequestAndResponse()
-    var chunks = 0
+    let testHttp = generateMockRequestAndResponse()
+    let chunks = 0
     memstream.on('data', function (chunk) {
-      var output = JSON.parse(chunk.toString())
+      let output = JSON.parse(chunk.toString())
       chunks++
       if (output.name === 'dadi.test') {
         assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
@@ -107,10 +107,10 @@ describe('Request Logger', function () {
   })
 
   it('should handle x-forwarded-for correctly', function (done) {
-    var chunks = 0
-    var testHttp = generateMockRequestAndResponse(200, true)
+    let chunks = 0
+    let testHttp = generateMockRequestAndResponse(200, true)
     memstream.on('data', function (chunk) {
-      var output = JSON.parse(chunk.toString())
+      let output = JSON.parse(chunk.toString())
       chunks++
       if (output.name === 'dadi.test') {
         assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
@@ -127,10 +127,10 @@ describe('Request Logger', function () {
   })
 
   it('should handle IPv6 address', function (done) {
-    var chunks = 0
-    var testHttp = generateMockRequestAndResponse(200, false, '2001:0db8:85a3:0000:0000:8a2e:0370:7334')
+    let chunks = 0
+    let testHttp = generateMockRequestAndResponse(200, false, '2001:0db8:85a3:0000:0000:8a2e:0370:7334')
     memstream.on('data', function (chunk) {
-      var output = JSON.parse(chunk.toString())
+      let output = JSON.parse(chunk.toString())
       chunks++
       if (output.name === 'dadi.test') {
         assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
