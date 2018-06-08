@@ -25,7 +25,7 @@
     "url": "https://github.com/dadi/logger/issues"
   },
   "homepage": "https://github.com/dadi/logger",
-  "author": "DADI <team@dadi.tech>",
+  "author": "DADI <team@dadi.cloud>",
   "license": "ISC",
   "devDependencies": {
     "chai": "^3.5.0",

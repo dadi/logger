@@ -187,7 +187,7 @@ const self = module.exports = {
       ` ${moment().format()}` +
       ` ${req.method} ${req.url} HTTP/ ${req.httpVersion}` +
       ` ${res.statusCode}` +
-      ` ${(res._headers ? res._headers['content-length'] : '')}` +
+      ` ${(res.getHeader('content-length') ? res.getHeader('content-length') : '')}` +
       `${(req.headers['referer'] ? (' ' + req.headers['referer']) : '')}` +
       ` ${req.headers['user-agent']}`
 

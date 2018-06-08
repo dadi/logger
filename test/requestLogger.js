@@ -1,4 +1,5 @@
 const assert = require('chai').assert
+const http = require('http')
 const memoryStream = require('memorystream')
 
 /*
@@ -22,17 +23,16 @@ function generateMockRequestAndResponse (statusCode, forwarded, ip, url) {
     url: url || '/test',
     path: url || '/test'
   }
+
   if (forwarded) {
     req.connection.remoteAddress = '8.8.4.4'
     req.headers['x-forwarded-for'] = ip || '8.8.8.8'
   }
-  let res = {
-    end: function () { return true },
-    _headers: {
-      'content-length': 305
-    },
-    statusCode: statusCode || 200
-  }
+
+  let res = new http.ServerResponse(req)
+  res.statusCode = statusCode || 200
+  res.setHeader('content-length', 305)
+
   return {res: res, req: req, next: function () { res.end() }}
 }
 
