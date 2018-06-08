@@ -179,27 +179,24 @@ var self = module.exports = {
 
       var clientIpAddress = req.connection.remoteAddress
 
-      if (req.headers.hasOwnProperty('x-forwarded-for')) {
+      if (req.headers['x-forwarded-for']) {
         clientIpAddress = getClientIpAddress(req.headers['x-forwarded-for'])
       }
 
-      var accessRecord = (clientIpAddress || '') +
-      ' -' +
-      ' ' + moment().format() +
-      ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion +
-      ' ' + res.statusCode +
-      ' ' + (res._headers ? res._headers['content-length'] : '') +
-      (req.headers['referer'] ? (' ' + req.headers['referer']) : '') +
-      ' ' + req.headers['user-agent']
+      let accessRecord = `${(clientIpAddress || '')}` +
+      ` -` +
+      ` ${moment().format()}` +
+      ` ${req.method} ${req.url} HTTP/ ${req.httpVersion}` +
+      ` ${res.statusCode}` +
+      ` ${(res._headers ? res._headers['content-length'] : '')}` +
+      `${(req.headers['referer'] ? (' ' + req.headers['referer']) : '')}` +
+      ` ${req.headers['user-agent']}`
 
       // write to the access log first
       self.access(accessRecord)
 
       // log the request method and url, and the duration
-      self.info({module: 'router'}, req.method +
-        ' ' + req.url +
-        ' ' + res.statusCode +
-        ' ' + duration + 'ms')
+      self.info({module: 'router'}, `${req.method} ${req.url} ${res.statusCode} ${duration}ms`)
 
       if (trackRequestCount) stats.requests++
 

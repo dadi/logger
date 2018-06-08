@@ -27,10 +27,13 @@ function generateMockRequestAndResponse (statusCode, forwarded, ip, url) {
     req.headers['x-forwarded-for'] = ip || '8.8.8.8'
   }
   var res = {
-    end: function () { return true; },
+    end: function () { return true },
+    _headers: {
+      'content-length': 305
+    },
     statusCode: statusCode || 200
   }
-  return {res: res, req: req, next: function () { res.end(); }}
+  return {res: res, req: req, next: function () { res.end() }}
 }
 
 describe('Request Logger', function () {
@@ -59,7 +62,7 @@ describe('Request Logger', function () {
       if (output.name === 'dadi.test') {
         assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
         assert(output.msg.indexOf('200') !== -1, 'contains status')
-      }else if (output.name === 'access') {
+      } else if (output.name === 'access') {
         assert(output.msg.indexOf('8.8.8.8') !== -1, 'contains IP address')
         assert(output.msg.indexOf('http://google.com') !== -1, 'contains referer')
         assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
@@ -86,7 +89,7 @@ describe('Request Logger', function () {
       if (output.name === 'dadi.test') {
         assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
         assert(output.msg.indexOf('200') !== -1, 'contains status')
-      }else if (output.name === 'access') {
+      } else if (output.name === 'access') {
         assert(output.msg.indexOf('8.8.8.8') !== -1, 'contains IP address')
         assert(output.msg.indexOf('http://google.com') !== -1, 'contains referer')
         assert(output.msg.indexOf('GET /test') !== -1, 'contains method and path')
