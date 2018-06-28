@@ -1,22 +1,26 @@
 const assert = require('chai').assert
-const memoryStream = require('memorystream')
+const MemoryStream = require('memorystream')
 
 describe('Standard Logger', function () {
   // our logger is a singleton, but we need a clean instance
   delete require.cache[require.resolve('./../dadi/index.js')]
   let logger = require('./../dadi/index.js')
-  let memstream = new memoryStream()
+  let memstream = new MemoryStream()
 
-  logger.init({
-    accessLog: {
-      enabled: false // no access log, only expecting single messages
+  logger.init(
+    {
+      accessLog: {
+        enabled: false // no access log, only expecting single messages
+      },
+      enabled: true,
+      filename: 'test',
+      level: 'trace',
+      path: 'log/',
+      stream: memstream
     },
-    enabled: true,
-    filename: 'test',
-    level: 'trace',
-    path: 'log/',
-    stream: memstream
-  }, null, 'test')
+    null,
+    'test'
+  )
 
   it('should log at the trace level', function (done) {
     memstream.once('data', function (chunk) {
@@ -70,7 +74,7 @@ describe('Standard Logger', function () {
 
   it('should add a Kinesis log stream if configured', function (done) {
     let loggerTwo = require('./../dadi/index.js')
-    let memstreamTwo = new memoryStream()
+    let memstreamTwo = new MemoryStream()
 
     loggerTwo.init(
       {
@@ -89,7 +93,8 @@ describe('Standard Logger', function () {
         secretAccessKey: '',
         region: ''
       },
-    'test')
+      'test'
+    )
 
     let log = loggerTwo.getAccessLog()
 
