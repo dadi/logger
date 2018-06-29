@@ -15,6 +15,7 @@ function generateMockRequestAndResponse (statusCode, forwarded, ip, url) {
       remoteAddress: ip || '8.8.8.8'
     },
     headers: {
+      host: 'http://0.0.0.0',
       referer: 'http://google.com',
       'user-agent':
         'Mozilla/5.0 (Windows NT x.y; WOW64; rv:10.0) Gecko/20100101 Firefox/10.0'
@@ -77,7 +78,7 @@ describe('Request Logger', function () {
     memstream.on('data', function (chunk) {
       let output = JSON.parse(chunk.toString())
       chunks++
-      if (output.name === 'dadi.test') {
+      if (output.name === 'dadi-test') {
         assert(
           output.msg.indexOf('GET /test') !== -1,
           'contains method and path'
@@ -109,7 +110,7 @@ describe('Request Logger', function () {
     memstream.on('data', function (chunk) {
       let output = JSON.parse(chunk.toString())
       chunks++
-      if (output.name === 'dadi.test') {
+      if (output.name === 'dadi-test') {
         assert(
           output.msg.indexOf('GET /test') !== -1,
           'contains method and path'
@@ -141,7 +142,7 @@ describe('Request Logger', function () {
     memstream.on('data', function (chunk) {
       let output = JSON.parse(chunk.toString())
       chunks++
-      if (output.name === 'dadi.test') {
+      if (output.name === 'dadi-test') {
         assert(
           output.msg.indexOf('GET /test') !== -1,
           'contains method and path'
@@ -174,7 +175,8 @@ describe('Request Logger', function () {
     memstream.on('data', function (chunk) {
       let output = JSON.parse(chunk.toString())
       chunks++
-      if (output.name === 'dadi.test') {
+
+      if (output.name === 'dadi-test') {
         assert(
           output.msg.indexOf('GET /test') !== -1,
           'contains method and path'
@@ -198,5 +200,109 @@ describe('Request Logger', function () {
       if (chunks >= 2) return done() // only finish after accesslog and info
     })
     logger.requestLogger(testHttp.req, testHttp.res, testHttp.next) // fire
+  })
+
+  describe('Filtered parameters', function () {
+    beforeEach(function (done) {
+    // our logger is a singleton, but we need a clean instance
+      delete require.cache[require.resolve('./../dadi/index.js')]
+      logger = require('./../dadi/index.js')
+      memstream = new MemoryStream() // save ourselves from the fs rabbit hole
+
+      done()
+    })
+
+    it('should remove sensitive parameters from querystring when writing to log', function (done) {
+      logger.init(
+        {
+          accessLog: {
+            enabled: true
+          },
+          enabled: true,
+          filename: 'test',
+          level: 'trace',
+          path: 'log/',
+          stream: memstream,
+          filter: ['password']
+        },
+        null,
+        'test'
+      )
+
+      let testHttp = generateMockRequestAndResponse()
+      let chunks = 0
+
+      testHttp.req.url = testHttp.req.url + '?username=ed&password=octopus'
+
+      memstream.on('data', function (chunk) {
+        let output = JSON.parse(chunk.toString())
+        chunks++
+
+        if (output.name === 'dadi-test') {
+          assert(
+            output.msg.indexOf('octopus') === -1,
+            'path contains unfiltered parameters'
+          )
+        } else if (output.name === 'access') {
+          assert(
+            output.msg.indexOf('octopus') === -1,
+            'path contains unfiltered parameters'
+          )
+        }
+
+        if (chunks >= 2) {
+          memstream.removeAllListeners('data')
+          return done() // only finish after accesslog and info
+        }
+      })
+
+      logger.requestLogger(testHttp.req, testHttp.res, testHttp.next) // fire
+    })
+
+    it('should not remove unspecified parameters from querystring when writing to log', function (done) {
+      logger.init(
+        {
+          accessLog: {
+            enabled: true
+          },
+          enabled: true,
+          filename: 'test',
+          level: 'trace',
+          path: 'log/',
+          stream: memstream
+        },
+        null,
+        'test'
+      )
+
+      let testHttp = generateMockRequestAndResponse()
+      let chunks = 0
+
+      testHttp.req.url = testHttp.req.url + '?username=ed&password=octopus'
+
+      memstream.on('data', function (chunk) {
+        let output = JSON.parse(chunk.toString())
+        chunks++
+
+        if (output.name === 'dadi-test') {
+          assert(
+            output.msg.indexOf('octopus') > 0,
+            'path does not contain all parameters'
+          )
+        } else if (output.name === 'access') {
+          assert(
+            output.msg.indexOf('octopus') > 0,
+            'path does not contain all parameters'
+          )
+        }
+
+        if (chunks >= 2) {
+          memstream.removeAllListeners('data')
+          return done() // only finish after accesslog and info
+        }
+      })
+
+      logger.requestLogger(testHttp.req, testHttp.res, testHttp.next) // fire
+    })
   })
 })

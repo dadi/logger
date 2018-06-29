@@ -34,6 +34,7 @@
   "author": "DADI <team@dadi.cloud>",
   "license": "ISC",
   "dependencies": {
+    "@dadi/log-filter": "^0.0.1",
     "aws-kinesis-writable": "^2.0.0",
     "bunyan": "^1.8.5",
     "kinesis": "^1.2.2",
@@ -46,7 +47,6 @@
     "coveralls": "^3.0.1",
     "greenkeeper-postpublish": "^1.0.1",
     "istanbul": "^0.4.5",
-    "istanbul-cobertura-badger": "^1.2.1",
     "jasmine": "^2.5.2",
     "lint-staged": "^7.2.0",
     "mocha": "^5.2.0",

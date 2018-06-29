@@ -3,6 +3,7 @@
  */
 const bunyan = require('bunyan') // underlying logger
 const KinesisStream = require('aws-kinesis-writable') // kinesis
+const LogFilter = require('@dadi/log-filter')
 const mkdirp = require('mkdirp') // recursive mkdir
 const moment = require('moment') // datestamps and timing
 const path = require('path')
@@ -196,11 +197,14 @@ const self = (module.exports = {
         clientIpAddress = getClientIpAddress(req.headers['x-forwarded-for'])
       }
 
+      let logFilter = new LogFilter(req, self.options.filter || [])
+      let requestPath = logFilter.filterPath()
+
       let accessRecord =
         `${clientIpAddress || ''}` +
         ` -` +
         ` ${moment().format()}` +
-        ` ${req.method} ${req.url} HTTP/ ${req.httpVersion}` +
+        ` ${req.method} ${requestPath} HTTP/ ${req.httpVersion}` +
         ` ${res.statusCode}` +
         ` ${
           res.getHeader('content-length') ? res.getHeader('content-length') : ''
@@ -214,7 +218,7 @@ const self = (module.exports = {
       // log the request method and url, and the duration
       self.info(
         { module: 'router' },
-        `${req.method} ${req.url} ${res.statusCode} ${duration}ms`
+        `${req.method} ${requestPath} ${res.statusCode} ${duration}ms`
       )
 
       if (trackRequestCount) stats.requests++
