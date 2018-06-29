@@ -114,6 +114,32 @@ logger.init(logConfig)
 app.use(logger.requestLogger)
 ```
 
+#### Excluding sensitive parameters
+
+It is possible to prevent sensitive querystring parameters from being written to log files by specifying an array of parameters in the configuration.
+
+```json
+let logConfig = {
+  "enabled": true,
+  "level": "info",
+  "path": "./log",
+  "filename": "my_web_app",
+  "filter": ["password"],
+  "extension": "log",
+  "accessLog": {
+    "enabled": true
+  }
+}
+```
+
+```
+// Request URL:
+/profile?username=ed&password=octopus
+
+// Written to log as:
+/profile?username=ed&password=%5BFILTERED%5D
+```
+
 #### The HTTP log record
 
 The request log contains a stream of JSON records. Each record contains a msg property containing details about the HTTP request, formatted using the nginx server log format.
