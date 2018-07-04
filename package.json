@@ -10,7 +10,7 @@
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "dependencies": {
-    "aws-kinesis-writable": "^2.0.0",
+    "aws-kinesis-writable": "^4.0.0",
     "bunyan": "^1.8.5",
     "kinesis": "^1.2.2",
     "memorystream": "^0.3.1",
