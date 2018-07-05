@@ -4,18 +4,24 @@
   "description": "DADI Logger",
   "main": "dadi/index.js",
   "scripts": {
+    "format": "prettier --no-semi --single-quote --write '{dadi,test}/**/*.js' && standard --fix '{dadi,test/**}/*.js'",
     "test": "standard 'dadi/index.js' && ./node_modules/.bin/istanbul cover --report cobertura --report text --report html --report lcov ./node_modules/.bin/_mocha test",
     "posttest": "./scripts/coverage.js",
     "postpublish": "greenkeeper-postpublish",
+    "precommit": "lint-staged",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
-  "dependencies": {
-    "aws-kinesis-writable": "^2.0.0",
-    "bunyan": "^1.8.5",
-    "kinesis": "^1.2.2",
-    "memorystream": "^0.3.1",
-    "mkdirp": "^0.5.1",
-    "moment": "^2.17.0"
+  "lint-staged": {
+    "dadi/**/*.js": [
+      "prettier --no-semi --single-quote --write",
+      "standard --fix",
+      "git add"
+    ]
+  },
+  "standard": {
+    "env": [
+      "mocha"
+    ]
   },
   "repository": {
     "type": "git",
@@ -27,13 +33,24 @@
   "homepage": "https://github.com/dadi/logger",
   "author": "DADI <team@dadi.cloud>",
   "license": "ISC",
+  "dependencies": {
+    "@dadi/log-filter": "^0.0.1",
+    "aws-kinesis-writable": "^2.0.0",
+    "bunyan": "^1.8.5",
+    "kinesis": "^1.2.2",
+    "memorystream": "^0.3.1",
+    "mkdirp": "^0.5.1",
+    "moment": "^2.17.0"
+  },
   "devDependencies": {
     "chai": "^3.5.0",
+    "coveralls": "^3.0.1",
     "greenkeeper-postpublish": "^1.0.1",
     "istanbul": "^0.4.5",
-    "istanbul-cobertura-badger": "^1.2.1",
     "jasmine": "^2.5.2",
+    "lint-staged": "^7.2.0",
     "mocha": "^5.2.0",
+    "prettier": "^1.13.6",
     "semantic-release": "^8.2.0",
     "standard": "^8.6.0"
   }
