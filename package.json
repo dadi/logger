@@ -34,7 +34,7 @@
   "author": "DADI <team@dadi.cloud>",
   "license": "ISC",
   "dependencies": {
-    "@dadi/log-filter": "^0.0.1",
+    "@dadi/log-filter": "^1.0.0",
     "aws-kinesis-writable": "^2.0.0",
     "bunyan": "^1.8.5",
     "kinesis": "^1.2.2",
