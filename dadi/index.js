@@ -1,20 +1,20 @@
 /**
  * @module Log
  */
-var bunyan = require('bunyan') // underlying logger
-var KinesisStream = require('aws-kinesis-writable') // kinesis
-var mkdirp = require('mkdirp') // recursive mkdir
-var moment = require('moment') // datestamps and timing
-var path = require('path')
-var _ = require('underscore')
+const bunyan = require('bunyan') // underlying logger
+const KinesisStream = require('aws-kinesis-writable') // kinesis
+const LogFilter = require('@dadi/log-filter')
+const mkdirp = require('mkdirp') // recursive mkdir
+const moment = require('moment') // datestamps and timing
+const path = require('path')
 
-var logPath // where to log
-var accessLogPath // where to stick accessLogs
-var log // logger instances
-var accessLog // access log gets it's own instance
-var env // development, production, etc
+let logPath // where to log
+let accessLogPath // where to send accessLogs
+let log // logger instances
+let accessLog // access log gets it's own instance
+let env // development, production, etc
 
-var defaults = {
+let defaults = {
   enabled: false,
   level: 'info',
   path: './log',
@@ -24,104 +24,113 @@ var defaults = {
   }
 }
 
-var trackRequestCount = true
-var stats = {
+let trackRequestCount = true
+let stats = {
   requests: 0 // total request count
 }
 
 function setOptions (options, awsConfig, environment) {
   env = environment
 
-  options = _.extend(defaults, options)
+  options = Object.assign({}, defaults, options)
 
-  logPath = path.resolve(options.path + '/' + options.filename + '.' + env + '.' + options.extension)
-  accessLogPath = path.resolve(options.path + '/' + options.filename + '.access.' + options.extension)
+  logPath = path.resolve(
+    options.path + '/' + options.filename + '.' + env + '.' + options.extension
+  )
+  accessLogPath = path.resolve(
+    options.path + '/' + options.filename + '.access.' + options.extension
+  )
 
   // create log directory if it doesn't exist, idempotent
   mkdirp(path.resolve(options.path), {}, function (err, made) {
     if (err) {
       module.exports.error(err)
     }
-
-    if (made) {
-      module.exports.info('Log directory created at ' + made)
-    }
   })
 
   log = bunyan.createLogger({
     name: 'dadi-' + options.filename,
     serializers: bunyan.stdSerializers,
-    streams: getStreams(options)
+    streams: getStreams(options, 'error')
   })
-
-  if (env === 'development') {
-    log.addStream({ level: 'debug', stream: process.stdout })
-  } // cli logs in dev
 
   initAccessLog(options, awsConfig)
 }
 
-function getStreams (options) {
-  if (options.testStream) { // override for testing
-    return options.testStream
+function getStreams (options, defaultLevel) {
+  let level = options.level || defaultLevel || 'error'
+  let streamInstance = getStreamInstance(options, level)
+
+  if (streamInstance) {
+    return streamInstance
   }
 
-  return [
-    { level: 'info', path: logPath },
-    { level: 'warn', path: logPath },
-    { level: 'error', path: logPath }
-  ]
+  if (defaultLevel === 'access') {
+    return [
+      {
+        path: accessLogPath
+      }
+    ]
+  } else {
+    return [
+      { level: 'info', path: logPath },
+      { level: 'warn', path: logPath },
+      { level: 'error', path: logPath }
+    ]
+  }
+}
+
+function getStreamInstance (options, level) {
+  if (options.stream && typeof options.stream === 'object') {
+    return [
+      {
+        level,
+        stream: options.stream
+      }
+    ]
+  }
 }
 
 function initAccessLog (options, awsConfig) {
   if (options.accessLog.enabled) {
-    if (options.testStream) { // test intercept
-      accessLog = bunyan.createLogger({
-        name: 'access',
-        serializers: bunyan.stdSerializers,
-        streams: options.testStream
-      })
-    } else {
-      accessLog = bunyan.createLogger({
-        name: 'access',
-        serializers: bunyan.stdSerializers,
-        streams: [
-          {
-            path: accessLogPath
-          }
-        ]
-      })
-    }
+    accessLog = bunyan.createLogger({
+      name: 'access',
+      serializers: bunyan.stdSerializers,
+      streams: getStreams(options, 'access')
+    })
   }
 
-  if (options.accessLog.enabled &&
+  if (
+    accessLog &&
     options.accessLog.kinesisStream &&
     options.accessLog.kinesisStream !== '' &&
-    awsConfig !== null) {
-    // Create a log stream
-    accessLog.addStream(
-      {
-        name: 'Kinesis Log Stream',
-        level: 'info',
-        stream: new KinesisStream({
-          accessKeyId: awsConfig.accessKeyId,
-          secretAccessKey: awsConfig.secretAccessKey,
-          region: awsConfig.region,
-          streamName: options.accessLog.kinesisStream,
-          partitionKey: 'dadi-web'
-        })
-      }
+    awsConfig !== null
+  ) {
+    accessLog.addStream({
+      name: 'Kinesis Log Stream',
+      level: 'info',
+      stream: new KinesisStream({
+        accessKeyId: awsConfig.accessKeyId,
+        secretAccessKey: awsConfig.secretAccessKey,
+        region: awsConfig.region,
+        streamName: options.accessLog.kinesisStream,
+        partitionKey: 'dadi-web'
+      })
+    })
+
+    let logStream = accessLog.streams.find(
+      stream => stream.name === 'Kinesis Log Stream'
     )
 
-    var logStream = _.findWhere(accessLog.streams, { 'name': 'Kinesis Log Stream' })
-    logStream.stream.on('error', function (err) { // dump kinesis errors
+    logStream.stream.on('error', err => {
+      // dump kinesis errors
       console.log(err)
       log.warn(err)
     })
   }
 }
 
-var self = module.exports = {
+const self = (module.exports = {
   options: {},
 
   init: function (options, awsConfig, environment) {
@@ -131,7 +140,10 @@ var self = module.exports = {
   },
 
   enabled: function (level) {
-    return this.options.enabled && (bunyan.resolveLevel(level) >= bunyan.resolveLevel(this.options.level))
+    return (
+      this.options.enabled &&
+      bunyan.resolveLevel(level) >= bunyan.resolveLevel(this.options.level)
+    )
   },
 
   access: function access () {
@@ -174,34 +186,40 @@ var self = module.exports = {
 
   // middleware for handling Connect style requests
   requestLogger: function (req, res, next) {
-    var start = Date.now()
-    var _end = res.end // set up a tap in res.end
+    let start = Date.now()
+    let _end = res.end // set up a tap in res.end
     res.end = function () {
-      var duration = Date.now() - start
+      let duration = Date.now() - start
 
-      var clientIpAddress = req.connection.remoteAddress
+      let clientIpAddress = req.connection.remoteAddress
 
-      if (req.headers.hasOwnProperty('x-forwarded-for')) {
+      if (req.headers['x-forwarded-for']) {
         clientIpAddress = getClientIpAddress(req.headers['x-forwarded-for'])
       }
 
-      var accessRecord = (clientIpAddress || '') +
-      ' -' +
-      ' ' + moment().format() +
-      ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion +
-      ' ' + res.statusCode +
-      ' ' + (res._headers ? res._headers['content-length'] : '') +
-      (req.headers['referer'] ? (' ' + req.headers['referer']) : '') +
-      ' ' + req.headers['user-agent']
+      let logFilter = new LogFilter(req, self.options.filter || [])
+      let requestPath = logFilter.filterPath()
+
+      let accessRecord =
+        `${clientIpAddress || ''}` +
+        ` -` +
+        ` ${moment().format()}` +
+        ` ${req.method} ${requestPath} HTTP/ ${req.httpVersion}` +
+        ` ${res.statusCode}` +
+        ` ${
+          res.getHeader('content-length') ? res.getHeader('content-length') : ''
+        }` +
+        `${req.headers['referer'] ? ' ' + req.headers['referer'] : ''}` +
+        ` ${req.headers['user-agent']}`
 
       // write to the access log first
       self.access(accessRecord)
 
       // log the request method and url, and the duration
-      self.info({module: 'router'}, req.method +
-        ' ' + req.url +
-        ' ' + res.statusCode +
-        ' ' + duration + 'ms')
+      self.info(
+        { module: 'router' },
+        `${req.method} ${requestPath} ${res.statusCode} ${duration}ms`
+      )
 
       if (trackRequestCount) stats.requests++
 
@@ -212,21 +230,24 @@ var self = module.exports = {
   },
 
   stats: stats
-}
+})
 
 /**
  * Get the client IP address from the load balancer's x-forwarded-for header
  */
-var getClientIpAddress = function (input) {
+const getClientIpAddress = function (input) {
   // matches all of the addresses in the private ranges and 127.0.0.1 as a bonus
-  var privateIpAddress = /(^127.0.0.1)|(^10.)|(^172.1[6-9].)|(^172.2[0-9].)|(^172.3[0-1].)|(^192.168.)/
-  var validIpAddress = /(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/
+  let privateIpAddress = /(^127.0.0.1)|(^10.)|(^172.1[6-9].)|(^172.2[0-9].)|(^172.3[0-1].)|(^192.168.)/
+  let validIpAddress = /(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/
 
-  var ips = input.split(',')
-  var result = ''
+  let ips = input.split(',')
+  let result = ''
 
-  ips.forEach(function (ip) {
-    if ((ip.match(validIpAddress) && !ip.match(privateIpAddress)) || isValidIPv6(ip)) {
+  ips.forEach(ip => {
+    if (
+      isValidIPv6(ip) ||
+      (ip.match(validIpAddress) && !ip.match(privateIpAddress))
+    ) {
       result = ip
     }
   })
@@ -234,8 +255,8 @@ var getClientIpAddress = function (input) {
   return result.trim()
 }
 
-var isValidIPv6 = function (input) {
-  var pattern = /^((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*::((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*|((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4})){7}$/
+const isValidIPv6 = function (input) {
+  let pattern = /^((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*::((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*|((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4})){7}$/
   return pattern.test(input)
 }
 

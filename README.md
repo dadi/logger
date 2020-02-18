@@ -1,7 +1,7 @@
 # DADI Logger
 
 [![npm (scoped)](https://img.shields.io/npm/v/@dadi/logger.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/logger)
-[![coverage](https://img.shields.io/badge/coverage-72%25-yellow.svg?style=flat-square)](https://github.com/dadi/logger)
+[![Coverage Status](https://coveralls.io/repos/github/dadi/logger/badge.svg?branch=master)](https://coveralls.io/github/dadi/logger?branch=master)
 [![Build Status](https://travis-ci.org/dadi/logger.svg?branch=master)](https://travis-ci.org/dadi/logger)
 [![JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](http://standardjs.com/)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square)](https://github.com/semantic-release/semantic-release)
@@ -34,6 +34,7 @@ Property|Description|Default|Example
 --------|-----------|-------|-------
 enabled|If true, logging is enabled using the following settings|false|true
 level|The threshold for writing to the log. Levels: `debug`, `info`, `warn`, `error`, `trace` |"info"|"warn"
+stream|The stream instance to write the log to||`process.stdout`
 path|The absolute or relative path to the directory for log files|"./log"|"/var/log/"
 filename|The filename to use for logs, without extension| |"web"
 extension|The file extension to use for logs|".log"|".txt"
@@ -42,7 +43,7 @@ enabled|If true, HTTP access logging is enabled. The log file name is similar to
 kinesisStream|An AWS Kinesis stream to write to log records to| | |
 
 ```js
-var logConfig = {
+let logConfig = {
   enabled: true,
   level: "info",
   path: "./log",
@@ -54,13 +55,13 @@ var logConfig = {
   }
 }
 
-var awsConfig = {
+let awsConfig = {
   accessKeyId: "",
   secretAccessKey: "",
   region: ""
 }
 
-var logger = require('@dadi/logger')
+const logger = require('@dadi/logger')
 logger.init(logConfig, awsConfig, 'production')
 ```
 
@@ -69,7 +70,7 @@ logger.init(logConfig, awsConfig, 'production')
 Once the logger has been initialised it's as simple as requiring the module and calling a log method:
 
 ```js
-var logger = require('@dadi/logger')
+const logger = require('@dadi/logger')
 
 logger.info('ImageHandler.get(): ' + req.url)
 ```
@@ -79,7 +80,7 @@ logger.info('ImageHandler.get(): ' + req.url)
 Log messages can be "namespaced" based on any criteria you can think of, but we like to use a "module" namespace to make it easier to track down messages from different modules.
 
 ```js
-var logger = require('@dadi/logger')
+const logger = require('@dadi/logger')
 
 logger.info({ module: 'ImageHandler' }, 'GET: ' + req.url)
 ```
@@ -93,10 +94,10 @@ DADI API, CDN and Web all use this HTTP request logger.
 #### Express
 
 ```js
-var express = require('express')
-var app = express()
+const express = require('express')
+const app = express()
 
-var logger = require('@dadi/logger')
+const logger = require('@dadi/logger')
 logger.init(logConfig)
 
 app.use(logger.requestLogger)
@@ -104,13 +105,39 @@ app.use(logger.requestLogger)
 
 #### Connect
 ```js
-var connect = require('connect')
-var app = connect()
+const connect = require('connect')
+const app = connect()
 
-var logger = require('@dadi/logger')
+const logger = require('@dadi/logger')
 logger.init(logConfig)
 
 app.use(logger.requestLogger)
+```
+
+#### Excluding sensitive parameters
+
+It is possible to prevent sensitive querystring parameters from being written to log files by specifying an array of parameters in the configuration.
+
+```json
+let logConfig = {
+  "enabled": true,
+  "level": "info",
+  "path": "./log",
+  "filename": "my_web_app",
+  "filter": ["password"],
+  "extension": "log",
+  "accessLog": {
+    "enabled": true
+  }
+}
+```
+
+```
+// Request URL:
+/profile?username=ed&password=octopus
+
+// Written to log as:
+/profile?username=ed&password=%5BFILTERED%5D
 ```
 
 #### The HTTP log record
