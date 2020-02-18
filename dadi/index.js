@@ -14,7 +14,7 @@ let log // logger instances
 let accessLog // access log gets it's own instance
 let env // development, production, etc
 
-let defaults = {
+const defaults = {
   enabled: false,
   level: 'info',
   path: './log',
@@ -24,8 +24,8 @@ let defaults = {
   }
 }
 
-let trackRequestCount = true
-let stats = {
+const trackRequestCount = true
+const stats = {
   requests: 0 // total request count
 }
 
@@ -58,8 +58,8 @@ function setOptions (options, awsConfig, environment) {
 }
 
 function getStreams (options, defaultLevel) {
-  let level = options.level || defaultLevel || 'error'
-  let streamInstance = getStreamInstance(options, level)
+  const level = options.level || defaultLevel || 'error'
+  const streamInstance = getStreamInstance(options, level)
 
   if (streamInstance) {
     return streamInstance
@@ -118,7 +118,7 @@ function initAccessLog (options, awsConfig) {
       })
     })
 
-    let logStream = accessLog.streams.find(
+    const logStream = accessLog.streams.find(
       stream => stream.name === 'Kinesis Log Stream'
     )
 
@@ -186,10 +186,10 @@ const self = (module.exports = {
 
   // middleware for handling Connect style requests
   requestLogger: function (req, res, next) {
-    let start = Date.now()
-    let _end = res.end // set up a tap in res.end
+    const start = Date.now()
+    const _end = res.end // set up a tap in res.end
     res.end = function () {
-      let duration = Date.now() - start
+      const duration = Date.now() - start
 
       let clientIpAddress = req.connection.remoteAddress
 
@@ -197,19 +197,19 @@ const self = (module.exports = {
         clientIpAddress = getClientIpAddress(req.headers['x-forwarded-for'])
       }
 
-      let logFilter = new LogFilter(req, self.options.filter || [])
-      let requestPath = logFilter.filterPath()
+      const logFilter = new LogFilter(req, self.options.filter || [])
+      const requestPath = logFilter.filterPath()
 
-      let accessRecord =
+      const accessRecord =
         `${clientIpAddress || ''}` +
-        ` -` +
+        ' -' +
         ` ${moment().format()}` +
         ` ${req.method} ${requestPath} HTTP/ ${req.httpVersion}` +
         ` ${res.statusCode}` +
         ` ${
           res.getHeader('content-length') ? res.getHeader('content-length') : ''
         }` +
-        `${req.headers['referer'] ? ' ' + req.headers['referer'] : ''}` +
+        `${req.headers.referer ? ' ' + req.headers.referer : ''}` +
         ` ${req.headers['user-agent']}`
 
       // write to the access log first
@@ -237,10 +237,10 @@ const self = (module.exports = {
  */
 const getClientIpAddress = function (input) {
   // matches all of the addresses in the private ranges and 127.0.0.1 as a bonus
-  let privateIpAddress = /(^127.0.0.1)|(^10.)|(^172.1[6-9].)|(^172.2[0-9].)|(^172.3[0-1].)|(^192.168.)/
-  let validIpAddress = /(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/
+  const privateIpAddress = /(^127.0.0.1)|(^10.)|(^172.1[6-9].)|(^172.2[0-9].)|(^172.3[0-1].)|(^192.168.)/
+  const validIpAddress = /(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/
 
-  let ips = input.split(',')
+  const ips = input.split(',')
   let result = ''
 
   ips.forEach(ip => {
@@ -256,7 +256,7 @@ const getClientIpAddress = function (input) {
 }
 
 const isValidIPv6 = function (input) {
-  let pattern = /^((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*::((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*|((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4})){7}$/
+  const pattern = /^((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*::((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*|((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4})){7}$/
   return pattern.test(input)
 }
 
