@@ -4,6 +4,7 @@
 const bunyan = require('bunyan') // underlying logger
 const KinesisStream = require('aws-kinesis-writable') // kinesis
 const LogFilter = require('@dadi/log-filter')
+const NewRelicAdaptor = require('./newrelic')
 const mkdirp = require('mkdirp') // recursive mkdir
 const moment = require('moment') // datestamps and timing
 const path = require('path')
@@ -11,6 +12,7 @@ const path = require('path')
 let logPath // where to log
 let accessLogPath // where to send accessLogs
 let log // logger instances
+let nrLog // New Relic logger instance
 let accessLog // access log gets it's own instance
 let env // development, production, etc
 
@@ -21,6 +23,9 @@ const defaults = {
   extension: '.log',
   accessLog: {
     enabled: false
+  },
+  newRelic: {
+    apiKey: ''
   }
 }
 
@@ -53,6 +58,10 @@ function setOptions (options, awsConfig, environment) {
     serializers: bunyan.stdSerializers,
     streams: getStreams(options, 'error')
   })
+
+  if (options.newRelic.apiKey) {
+    nrLog = new NewRelicAdaptor(options.newRelic)
+  }
 
   initAccessLog(options, awsConfig)
 }
@@ -157,23 +166,38 @@ const self = (module.exports = {
   },
   // bubble up enabled levels to our Bunyan instance
   debug: function debug () {
-    if (self.enabled('debug')) log.debug.apply(log, arguments)
+    if (self.enabled('debug')) {
+      log.debug.apply(log, arguments)
+      nrLog && nrLog.receive('debug', arguments)
+    }
   },
 
   info: function info () {
-    if (self.enabled('info')) log.info.apply(log, arguments)
+    if (self.enabled('info')) {
+      log.info.apply(log, arguments)
+      nrLog && nrLog.receive('info', arguments)
+    }
   },
 
   warn: function warn () {
-    if (self.enabled('warn')) log.warn.apply(log, arguments)
+    if (self.enabled('warn')) {
+      log.warn.apply(log, arguments)
+      nrLog && nrLog.receive('warn', arguments)
+    }
   },
 
   error: function error () {
-    if (self.enabled('error')) log.error.apply(log, arguments)
+    if (self.enabled('error')) {
+      log.error.apply(log, arguments)
+      nrLog && nrLog.receive('error', arguments)
+    }
   },
 
   trace: function trace () {
-    if (self.enabled('trace')) log.trace.apply(log, arguments)
+    if (self.enabled('trace')) {
+      log.trace.apply(log, arguments)
+      nrLog && nrLog.receive('trace', arguments)
+    }
   },
 
   get: function get () {
